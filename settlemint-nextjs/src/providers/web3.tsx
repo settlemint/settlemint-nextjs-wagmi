@@ -2,7 +2,7 @@
 
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 import { http, WagmiProvider, createConfig } from "wagmi";
-import { polygonMumbai } from "wagmi/chains";
+import { polygonAmoy } from "wagmi/chains";
 
 const nodeUrl = new URL(
   `/${process.env.NEXT_PUBLIC_BTP_TOKEN}`,
@@ -12,10 +12,10 @@ const nodeUrl = new URL(
 const config = createConfig(
   getDefaultConfig({
     // Your dApps chains
-    chains: [polygonMumbai],
+    chains: [polygonAmoy],
     transports: {
       // RPC URL for each chain
-      [polygonMumbai.id]: http(nodeUrl.toString()), // TODO: use a proxy, don't expose api key
+      [polygonAmoy.id]: http(nodeUrl.toString()), // TODO: use a proxy, don't expose api key
     },
 
     // Required API Keys
@@ -26,7 +26,10 @@ const config = createConfig(
 
     // Optional App Info
     appDescription: "My App Info",
-    appUrl: window.location.toString(),
+    appUrl:
+      typeof window === "undefined"
+        ? process.env.NEXTAUTH_URL!
+        : window.location.toString(),
   })
 );
 
