@@ -4,18 +4,13 @@ import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 import { http, WagmiProvider, createConfig } from "wagmi";
 import { polygonAmoy } from "wagmi/chains";
 
-const nodeUrl = new URL(
-  `/${process.env.NEXT_PUBLIC_BTP_TOKEN}`,
-  process.env.NEXT_PUBLIC_BLOCKCHAIN_NODE!
-);
-
 const config = createConfig(
   getDefaultConfig({
     // Your dApps chains
     chains: [polygonAmoy],
     transports: {
       // RPC URL for each chain
-      [polygonAmoy.id]: http(nodeUrl.toString()), // TODO: use a proxy, don't expose api key
+      [polygonAmoy.id]: http("/proxy/blockchain-node"),
     },
 
     // Required API Keys
