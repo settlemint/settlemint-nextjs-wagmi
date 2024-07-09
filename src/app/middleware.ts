@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createRouteMatcher } from "../utils/route-matcher";
 
 const isProxyRoute = createRouteMatcher(["/proxy/(.*)"]);
@@ -6,7 +6,7 @@ const isProxyRoute = createRouteMatcher(["/proxy/(.*)"]);
 export const middleware = async (req: NextRequest) => {
   if (isProxyRoute(req)) {
     const newResponse = NextResponse.next();
-    newResponse.headers.set("x-auth-token", process.env.BTP_TOKEN!);
+    newResponse.headers.set("x-auth-token", process.env.BTP_TOKEN ?? "");
     return newResponse;
   }
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { http, WagmiProvider, createConfig } from "wagmi";
+import { WagmiProvider, createConfig, http } from "wagmi";
 import { polygonAmoy } from "wagmi/chains";
 
 const config = createConfig(
@@ -10,11 +10,14 @@ const config = createConfig(
     chains: [polygonAmoy],
     transports: {
       // RPC URL for each chain
-      [polygonAmoy.id]: http("/proxy/blockchain-node"),
+      [polygonAmoy.id]: http(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/proxy/blockchain-node`
+      ),
     },
 
     // Required API Keys
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+    walletConnectProjectId:
+      process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "",
 
     // Required App Info
     appName: "My App",
@@ -23,7 +26,7 @@ const config = createConfig(
     appDescription: "My App Info",
     appUrl:
       typeof window === "undefined"
-        ? process.env.NEXTAUTH_URL!
+        ? (process.env.NEXT_PUBLIC_SERVER_URL as string)
         : window.location.toString(),
   })
 );

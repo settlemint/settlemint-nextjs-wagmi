@@ -5,10 +5,18 @@ const nextConfig = {
       `/${process.env.BTP_TOKEN}`,
       process.env.BLOCKCHAIN_NODE
     );
+    const portalUrl = new URL(
+      `/${process.env.BTP_TOKEN}`,
+      process.env.PORTAL_URL
+    );
     return [
       {
         source: "/proxy/blockchain-node",
         destination: nodeUrl.toString(),
+      },
+      {
+        source: "/proxy/portal/:path*",
+        destination: `${portalUrl.toString()}/:path*`,
       },
     ];
   },
