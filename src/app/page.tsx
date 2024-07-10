@@ -20,13 +20,10 @@ export default function Home() {
   const { data } = useSuspenseQuery({
     queryKey: ["symbol"],
     queryFn: async () => {
-      const response = await portal.GET(
-        "/api/generic-erc-20/{address}/symbol",
-        {
-          params: { path: { address } },
-          parseAs: "text",
-        }
-      );
+      const response = await portal.GET("/api/generic-erc-20/{address}/symbol", {
+        params: { path: { address } },
+        parseAs: "text",
+      });
       return response.data;
     },
   });
@@ -39,7 +36,7 @@ export default function Home() {
         functionName: "transfer",
         args: [to, value],
       }),
-    [address, to, value, writeContractAsync]
+    [address, to, value, writeContractAsync],
   );
 
   return (

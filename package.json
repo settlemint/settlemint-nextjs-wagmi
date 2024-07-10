@@ -6,7 +6,7 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "check": "biome ci --organize-imports-enabled=false src/",
+    "check": "biome ci --organize-imports-enabled=false src/ && bunx tsc",
     "lint": "biome lint --write --unsafe src/",
     "format": "biome format --write src/",
     "codegen": "bun scripts/codegen.ts",

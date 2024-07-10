@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createRouteMatcher } from "../utils/route-matcher";
+import { createRouteMatcher } from "./utils/route-matcher";
 
 const isProxyRoute = createRouteMatcher(["/proxy/(.*)"]);
 
