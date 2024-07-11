@@ -4,7 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { ConnectKitButton } from "connectkit";
 import Head from "next/head";
 import { useCallback, useState } from "react";
-import { getAddress } from "viem";
+import { InvalidAddressError, getAddress } from "viem";
 import { useAccount, useWriteContract } from "wagmi";
 import contractData from "../../contractData/GenericERC20.json";
 import { portal } from "./portal/portal";
@@ -13,31 +13,37 @@ export default function Home() {
   const [to, setTo] = useState<string>("");
   const [value, setValue] = useState<string>("");
   const account = useAccount();
-  const address = getAddress(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "");
   const isAccountConnected = account.status === "connected";
 
   const { writeContractAsync, isPending, isSuccess } = useWriteContract();
   const { data } = useSuspenseQuery({
     queryKey: ["symbol"],
     queryFn: async () => {
-      const response = await portal.GET("/api/generic-erc-20/{address}/symbol", {
-        params: { path: { address } },
-        parseAs: "text",
-      });
-      return response.data;
+      try {
+        const address = getAddress(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "");
+        const response = await portal.GET("/api/generic-erc-20/{address}/symbol", {
+          params: { path: { address } },
+          parseAs: "text",
+        });
+        return response.data;
+      } catch (err) {
+        if (err instanceof InvalidAddressError) {
+          return null;
+        }
+        throw err;
+      }
     },
   });
 
-  const writeContract = useCallback(
-    () =>
-      writeContractAsync({
-        address,
-        abi: contractData.abi,
-        functionName: "transfer",
-        args: [to, value],
-      }),
-    [address, to, value, writeContractAsync],
-  );
+  const writeContract = useCallback(() => {
+    const address = getAddress(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "");
+    return writeContractAsync({
+      address,
+      abi: contractData.abi,
+      functionName: "transfer",
+      args: [to, value],
+    });
+  }, [to, value, writeContractAsync]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
