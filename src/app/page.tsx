@@ -20,16 +20,11 @@ export default function Home() {
     queryKey: ["symbol"],
     queryFn: async () => {
       try {
-        const address = getAddress(
-          process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? ""
-        );
-        const response = await portal.GET(
-          "/api/generic-erc-20/{address}/symbol",
-          {
-            params: { path: { address } },
-            parseAs: "text",
-          }
-        );
+        const address = getAddress(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "");
+        const response = await portal.GET("/api/generic-erc-20/{address}/symbol", {
+          params: { path: { address } },
+          parseAs: "text",
+        });
         return response.data;
       } catch (err) {
         if (err instanceof InvalidAddressError) {
