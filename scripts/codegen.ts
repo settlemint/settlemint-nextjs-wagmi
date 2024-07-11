@@ -6,4 +6,7 @@ $`openapi-typescript ${middlewareUrl.toString()}/docs/json -o src/app/portal/por
   .then(() => {
     console.log("Portal schema generated");
   })
-  .catch((err) => console.error(err));
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

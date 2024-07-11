@@ -11,14 +11,17 @@
     "format": "biome format --write src/",
     "codegen": "bun scripts/codegen.ts",
     "predev": "bun codegen",
-    "prebuild": "bun codegen"
+    "prebuild": "bun codegen",
+    "ci": "next build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.50.1",
     "connectkit": "^1.8.2",
+    "encoding": "^0.1.13",
     "next": "14.2.4",
     "openapi-fetch": "^0.10.2",
     "path-to-regexp": "^7.0.0",
+    "pino-pretty": "^11.2.1",
     "react": "^18",
     "react-dom": "^18",
     "wagmi": "^2.10.9"
