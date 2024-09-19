@@ -1,22 +1,19 @@
-"use client";
+"use client"
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ConnectKitButton } from "connectkit";
+import { motion } from "framer-motion";
 import Head from "next/head";
-import { useCallback, useState } from "react";
+import { FaClipboardList, FaCoffee } from "react-icons/fa";
 import { InvalidAddressError, getAddress } from "viem";
-import { useAccount, useWriteContract } from "wagmi";
-import contractData from "../../contractData/GenericERC20.json";
+import { useAccount } from "wagmi";
 import { portal } from "./portal/portal";
 
 export default function Home() {
-  const [to, setTo] = useState<string>("");
-  const [value, setValue] = useState<string>("");
   const account = useAccount();
   const isAccountConnected = account.status === "connected";
 
-  const { writeContractAsync, isPending, isSuccess } = useWriteContract();
-  const { data } = useSuspenseQuery({
+  const { data: symbol } = useSuspenseQuery({
     queryKey: ["symbol"],
     queryFn: async () => {
       try {
@@ -35,61 +32,82 @@ export default function Home() {
     },
   });
 
-  const writeContract = useCallback(() => {
-    const address = getAddress(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "");
-    return writeContractAsync({
-      address,
-      abi: contractData.abi,
-      functionName: "transfer",
-      args: [to, value],
-    });
-  }, [to, value, writeContractAsync]);
+  // Dummy data for the table
+  const dummyData = [
+    { batchId: "001", partner: "Partner A", note: "First batch" },
+    { batchId: "002", partner: "Partner B", note: "Urgent delivery" },
+    { batchId: "003", partner: "Partner C", note: "Standard order" },
+  ];
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#F5E6D3] to-[#E6CCB2]">
       <Head>
-        <title>Send Tokens</title>
+        <title>Coffee Batch Tracker</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
       </Head>
 
-      <main className="my-4 flex flex-col items-center">
-        <h1 className="text-3xl font-bold mb-4">Send Your Tokens</h1>
-        <ConnectKitButton />
-        <h3 className="text-2xl font-bold mb-4">
-          <p>Token to Send: {data ?? "/"}</p>
-        </h3>
-        <div className="mb-2">
-          <input
-            type="text"
-            placeholder="Send Tokens To"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            disabled={!isAccountConnected}
-            className="p-2 border border-gray-400 rounded-md text-black"
-          />
-        </div>
-        <div className="mb-2">
-          <input
-            type="text"
-            placeholder="How Many Tokens?"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            disabled={!isAccountConnected}
-            className="p-2 border border-gray-400 rounded-md text-black"
-          />
-        </div>
-        <div>
-          <button
-            type="button"
-            onClick={writeContract}
-            disabled={!isAccountConnected}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      <header className="bg-[#6F4E37] text-[#F5E6D3] p-6 shadow-lg">
+        <div className="container mx-auto flex justify-between items-center">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            Send Tokens
-          </button>
-          {isPending && <p className="mt-2">Sending Tokens</p>}
-          {isSuccess && <p className="mt-2">Tokens Sent</p>}
+            <h1 className="text-3xl font-bold font-poppins flex items-center">
+              <FaCoffee className="mr-2" /> Coffee Batch Tracker
+            </h1>
+            <p className="text-sm mt-1 opacity-80">Total Batches: {dummyData.length}</p>
+          </motion.div>
+          <div className="flex flex-col items-end">
+            <p className="mb-2 text-sm font-light">Token: {symbol ?? "/"}</p>
+            <ConnectKitButton />
+          </div>
         </div>
+      </header>
+
+      <main className="flex-grow container mx-auto my-12 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <h2 className="text-2xl font-semibold mb-6 text-[#3E2723] flex items-center">
+            <FaClipboardList className="mr-2" /> Recent Batches
+          </h2>
+          <div className="overflow-hidden rounded-lg shadow-xl">
+            <table className="w-full bg-white">
+              <thead>
+                <tr className="bg-[#6F4E37] text-white">
+                  <th className="py-3 px-6 text-left">Batch ID</th>
+                  <th className="py-3 px-6 text-left">Partner</th>
+                  <th className="py-3 px-6 text-left">Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dummyData.map((batch, index) => (
+                  <motion.tr
+                    key={batch.batchId}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="hover:bg-[#F5E6D3] transition-colors duration-150"
+                  >
+                    <td className="py-4 px-6 border-b border-[#E6CCB2] text-[#3E2723]">{batch.batchId}</td>
+                    <td className="py-4 px-6 border-b border-[#E6CCB2] text-[#3E2723]">{batch.partner}</td>
+                    <td className="py-4 px-6 border-b border-[#E6CCB2] text-[#3E2723]">{batch.note}</td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
       </main>
+
+      <footer className="bg-[#3E2723] text-[#F5E6D3] py-4 mt-auto">
+        <div className="container mx-auto text-center text-sm">
+          &copy; 2023 Coffee Batch Tracker. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 }
