@@ -1,36 +1,33 @@
 "use client"
 
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { ConnectKitButton } from "connectkit";
 import { motion } from "framer-motion";
 import Head from "next/head";
 import { FaClipboardList, FaCoffee } from "react-icons/fa";
-import { InvalidAddressError, getAddress } from "viem";
 import { useAccount } from "wagmi";
-import { portal } from "./portal/portal";
 
 export default function Home() {
   const account = useAccount();
   const isAccountConnected = account.status === "connected";
 
-  const { data: symbol } = useSuspenseQuery({
-    queryKey: ["symbol"],
-    queryFn: async () => {
-      try {
-        const address = getAddress(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "");
-        const response = await portal.GET("/api/generic-erc-20/{address}/symbol", {
-          params: { path: { address } },
-          parseAs: "text",
-        });
-        return response.data;
-      } catch (err) {
-        if (err instanceof InvalidAddressError) {
-          return null;
-        }
-        throw err;
-      }
-    },
-  });
+  // const { data: symbol } = useSuspenseQuery({
+  //   queryKey: ["symbol"],
+  //   queryFn: async () => {
+  //     try {
+  //       const address = getAddress(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "");
+  //       const response = await portal.GET("/api/generic-erc-20/{address}/symbol", {
+  //         params: { path: { address } },
+  //         parseAs: "text",
+  //       });
+  //       return response.data;
+  //     } catch (err) {
+  //       if (err instanceof InvalidAddressError) {
+  //         return null;
+  //       }
+  //       throw err;
+  //     }
+  //   },
+  // });
 
   // Dummy data for the table
   const dummyData = [
@@ -59,7 +56,6 @@ export default function Home() {
             <p className="text-sm mt-1 opacity-80">Total Batches: {dummyData.length}</p>
           </motion.div>
           <div className="flex flex-col items-end">
-            <p className="mb-2 text-sm font-light">Token: {symbol ?? "/"}</p>
             <ConnectKitButton />
           </div>
         </div>

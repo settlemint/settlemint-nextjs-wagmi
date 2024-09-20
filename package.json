@@ -17,9 +17,11 @@
     "docker:run": "docker run -p 3000:3000 settlemint/settlemint-eas-coffee"
   },
   "dependencies": {
+    "@ethereum-attestation-service/eas-sdk": "^2.6.0",
     "@tanstack/react-query": "5.51.24",
     "connectkit": "1.8.2",
     "encoding": "0.1.13",
+    "ethers": "^6.13.2",
     "next": "14.2.5",
     "openapi-fetch": "0.11.1",
     "path-to-regexp": "7.1.0",
