@@ -13,7 +13,7 @@
     "predev": "bun codegen",
     "prebuild": "bun codegen",
     "ci": "next build",
-    "docker": "docker buildx build --platform linux/amd64,linux/arm64 -t settlemint/settlemint-eas-coffee:main --push .",
+    "docker": "docker buildx build --platform linux/amd64,linux/arm64 -t settlemint/settlemint-eas-coffee:main-3 --push .",
     "docker:run": "docker run -p 3000:3000 settlemint/settlemint-eas-coffee"
   },
   "dependencies": {
@@ -22,6 +22,7 @@
     "connectkit": "1.8.2",
     "encoding": "0.1.13",
     "ethers": "^6.13.2",
+    "graphql-request": "^7.1.0",
     "next": "14.2.5",
     "openapi-fetch": "0.11.1",
     "path-to-regexp": "7.1.0",

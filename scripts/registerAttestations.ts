@@ -60,7 +60,7 @@ async function createAttestation(
   ]);
 
   const tx = await eas.attest({
-    schema: SCHEMA_UID,
+    schema: SCHEMA_UID ?? "",
     data: {
       recipient: ethers.ZeroAddress,
       expirationTime: BigInt(0),
@@ -126,7 +126,7 @@ export async function registerMultipleAttestations(count: number) {
 
 async function main() {
   try {
-    const attestationCount = 2; // This will create 2 complete coffee journeys, each with 6 stages
+    const attestationCount = 20; // This will create 2 complete coffee journeys, each with 6 stages
     const attestations = await registerMultipleAttestations(attestationCount);
     console.log(`Registered ${attestations.length} attestations`);
   } catch (error) {

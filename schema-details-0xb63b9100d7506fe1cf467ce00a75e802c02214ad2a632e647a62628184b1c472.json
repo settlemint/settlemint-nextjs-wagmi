@@ -1,6 +1,0 @@
-{
-  "uid": "0xb63b9100d7506fe1cf467ce00a75e802c02214ad2a632e647a62628184b1c472",
-  "schema": "string batchId, uint256 timestamp, address attester, uint8 stage, string location, string[] certifications, string details, bytes32 previousAttestationId",
-  "resolver": "0x0000000000000000000000000000000000000000",
-  "revocable": true
-}

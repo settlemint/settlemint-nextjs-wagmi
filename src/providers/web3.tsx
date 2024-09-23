@@ -1,16 +1,25 @@
 "use client";
 
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { polygonAmoy } from "wagmi/chains";
+import { http, WagmiProvider, createConfig } from "wagmi";
+import type { Chain } from "wagmi/chains";
+
+const customChain: Chain = {
+  id: Number(process.env.CHAIN_ID),
+  name: process.env.CHAIN_NAME || '',
+  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: [`${process.env.BLOCKCHAIN_NODE}/${process.env.BTP_TOKEN}` || ''] },
+  },
+} as const satisfies Chain;
 
 const config = createConfig(
   getDefaultConfig({
     // Your dApps chains
-    chains: [polygonAmoy],
+    chains: [customChain],
     transports: {
       // RPC URL for each chain
-      [polygonAmoy.id]: http(`${process.env.NEXT_PUBLIC_SERVER_URL}/proxy/blockchain-node`),
+      [customChain.id]: http(`${process.env.NEXT_PUBLIC_SERVER_URL}/proxy/blockchain-node`),
     },
 
     // Required API Keys
@@ -35,7 +44,7 @@ export default function Web3Provider({
       <ConnectKitProvider
         options={{
           language: "en-US",
-          enforceSupportedChains: true,
+          enforceSupportedChains: false,
         }}
         mode="auto"
       >
