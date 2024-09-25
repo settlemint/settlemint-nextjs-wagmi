@@ -13,7 +13,7 @@
     "predev": "bun codegen",
     "prebuild": "bun codegen",
     "ci": "next build",
-    "docker": "docker buildx build --platform linux/amd64,linux/arm64 -t settlemint/settlemint-eas-coffee:main-5 --push .",
+    "docker": "docker buildx build --platform linux/amd64,linux/arm64 -t settlemint/settlemint-eas-coffee:main-5 --push --no-cache .",
     "docker:run": "docker run -p 3000:3000 settlemint/settlemint-eas-coffee"
   },
   "dependencies": {

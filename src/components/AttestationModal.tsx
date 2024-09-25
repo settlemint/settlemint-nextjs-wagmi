@@ -7,7 +7,7 @@ import type { DecodedData } from '../types/attestation';
 interface AttestationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (newAttestation: DecodedData) => void; // Add this line
+  onSubmit: (newAttestation: DecodedData) => void;
   mode: string;
 }
 
@@ -71,8 +71,8 @@ export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-[#2A2A2A] p-6 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-semibold text-white mb-4">Create Attestation</h2>
+      <div className="bg-[#2A2A2A] p-6 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto relative">
+        <h2 className="text-2xl font-semibold text-white mb-4">Create Coffee Journey Entry</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="batchId" className="block text-sm font-medium text-gray-300 mb-1">
@@ -164,13 +164,19 @@ export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onCl
                 isSubmitting ? 'bg-gray-400 cursor-not-allowed' : (isFormValid ? 'bg-[#8B4513] hover:bg-[#A0522D]' : 'bg-gray-400 cursor-not-allowed')
               }`}
             >
-              {isSubmitting ? 'Submitting...' : 'Create Attestation'}
+              {isSubmitting ? 'Submitting...' : 'Create Entry'}
             </button>
           </div>
         </form>
         {isSubmitting && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-            <div className="text-white text-xl">Creating attestation...</div>
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-center items-center">
+            <div className="relative w-24 h-24 mb-4">
+              <div className="absolute inset-0 border-4 border-[#D4A574] rounded-full animate-pulse" />
+              <div className="absolute inset-3 border-4 border-[#8B4513] rounded-full animate-pulse delay-150" />
+              <div className="absolute inset-6 border-4 border-[#A0522D] rounded-full animate-pulse delay-300" />
+            </div>
+            <p className="text-[#F5F5F5] text-xl font-semibold mb-2 animate-pulse">Creating entry...</p>
+            <p className="text-[#D4A574] text-sm animate-pulse">Brewing your coffee journey</p>
           </div>
         )}
       </div>

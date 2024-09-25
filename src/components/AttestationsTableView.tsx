@@ -24,7 +24,7 @@ export function AttestationsTableView() {
 
   return (
     <div className="container mx-auto my-12 px-4">
-      <h2 className="text-2xl font-semibold text-white mb-6">Browse Attestations</h2>
+      <h2 className="text-2xl font-semibold text-white mb-6">Browse Coffee Journeys</h2>
       <AttestationsTable attestations={attestations} columns={columns} />
     </div>
   );

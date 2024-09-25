@@ -21,7 +21,7 @@ export function CreateAttestationButton({ onClick, className = "" }: CreateAttes
           isConnected ? "hover:bg-[#E6BE8A]" : "opacity-50 cursor-not-allowed"
         } ${className}`}
       >
-        Create Attestation
+        Create Entry
       </button>
       {!isConnected && <Tooltip id="create-attestation-tooltip" />}
     </>

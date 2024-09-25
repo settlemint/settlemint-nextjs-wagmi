@@ -102,6 +102,7 @@ export default function Home() {
                       <p className="text-3xl font-bold text-[#F5F5F5]">{totalAttestations.toLocaleString()}</p>
                       <p className="text-sm text-[#D4A574]">Coffee Journeys Tracked</p>
                     </div>
+                    {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
                     <svg className="w-12 h-12 text-[#D4A574]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -134,7 +135,7 @@ export default function Home() {
         <motion.div {...fadeIn}>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-[#D4A574] font-poppins">
-              Recent Attestations
+              Recent Coffee Journeys
             </h2>
             <CreateAttestationButton onClick={() => setIsModalOpen(true)} />
           </div>
