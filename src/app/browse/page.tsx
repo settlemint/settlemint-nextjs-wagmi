@@ -2,9 +2,11 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useAccount } from 'wagmi'; // Add this import
 import { fetchAttestations } from "../../api/attestations";
 import { AttestationModal } from "../../components/AttestationModal"; // Change this import
 import { AttestationsTable } from "../../components/AttestationsTable";
+import { CreateAttestationButton } from "../../components/CreateAttestationButton";
 import { NavBar } from "../../components/NavBar";
 import type { Attestation } from "../../types/attestation";
 
@@ -18,6 +20,7 @@ export default function BrowsePage() {
   const [attestations, setAttestations] = useState<Attestation[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isConnected } = useAccount(); // Add this line
 
   useEffect(() => {
     const loadAttestations = async () => {
@@ -44,13 +47,7 @@ export default function BrowsePage() {
         <motion.div {...fadeIn}>
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-4xl font-bold text-[#D4A574] font-poppins">Browse Attestations</h1>
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="bg-[#D4A574] text-[#1A1A1A] px-4 py-2 rounded-md hover:bg-[#B88B5D] transition-colors"
-            >
-              Create Attestation
-            </button>
+            <CreateAttestationButton onClick={() => setIsModalOpen(true)} />
           </div>
           <div className="bg-[#2A2A2A] p-6 rounded-lg shadow-xl">
             <AttestationsTable

@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { fetchAttestations } from "../api/attestations";
 import { AttestationModal } from "../components/AttestationModal";
 import { AttestationsTable } from "../components/AttestationsTable";
+import { CreateAttestationButton } from "../components/CreateAttestationButton";
 import { NavBar } from "../components/NavBar";
 import type { Attestation } from "../types/attestation";
 
@@ -108,13 +109,7 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-[#D4A574] font-poppins">
               Recent Attestations
             </h2>
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="px-6 py-3 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-all duration-300 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Create Attestation
-            </button>
+            <CreateAttestationButton onClick={() => setIsModalOpen(true)} />
           </div>
           <div className="bg-[#2A2A2A] p-6 rounded-lg shadow-xl">
             <AttestationsTable
