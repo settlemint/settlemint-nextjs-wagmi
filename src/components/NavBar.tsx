@@ -12,8 +12,8 @@ export function NavBar() {
             <Image
               src="https://img.freepik.com/free-vector/three-coffee-beans-glyph_78370-1770.jpg?t=st=1727270626~exp=1727274226~hmac=dd1f7fecb7efd267d652efae32cf5d7a166c4214aea26a5ff7c272f581747db8&w=1380"
               alt="Coffee Beans Logo"
-              width={32}
-              height={32}
+              width={35}
+              height={35}
               className="rounded-full"
             />
             <span className="text-white text-base font-semibold ml-2">CBT</span>

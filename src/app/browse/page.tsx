@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { fetchAttestations } from "../../api/attestations";
+import { AttestationModal } from "../../components/AttestationModal"; // Change this import
 import { AttestationsTable } from "../../components/AttestationsTable";
 import { NavBar } from "../../components/NavBar";
 import type { Attestation } from "../../types/attestation";
@@ -16,6 +17,7 @@ const fadeIn = {
 export default function BrowsePage() {
   const [attestations, setAttestations] = useState<Attestation[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const loadAttestations = async () => {
@@ -30,12 +32,26 @@ export default function BrowsePage() {
     loadAttestations();
   }, []);
 
+  const handleCreateAttestation = (newAttestation: Attestation) => {
+    setAttestations([newAttestation, ...attestations]);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2A2A2A] font-sans text-[#F5F5F5]">
       <NavBar />
       <main className="flex-grow container mx-auto my-12 px-4">
         <motion.div {...fadeIn}>
-          <h1 className="text-4xl font-bold text-[#D4A574] mb-6 font-poppins">Browse Attestations</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-4xl font-bold text-[#D4A574] font-poppins">Browse Attestations</h1>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#D4A574] text-[#1A1A1A] px-4 py-2 rounded-md hover:bg-[#B88B5D] transition-colors"
+            >
+              Create Attestation
+            </button>
+          </div>
           <div className="bg-[#2A2A2A] p-6 rounded-lg shadow-xl">
             <AttestationsTable
               attestations={attestations}
@@ -50,6 +66,13 @@ export default function BrowsePage() {
           </div>
         </motion.div>
       </main>
+
+      <AttestationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateAttestation}
+        mode="create"
+      />
 
       <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-8 mt-auto">
         <div className="container mx-auto text-center">
