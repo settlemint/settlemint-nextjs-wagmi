@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async rewrites() {
@@ -11,6 +13,16 @@ const nextConfig = {
         destination: `${process.env.PORTAL_URL}/:path*`,
       },
     ];
+  },
+  reactStrictMode: true,
+  swcMinify: true,
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  experimental: {
+    appDir: true,
+  },
+  webpack(config) {
+    config.resolve.alias['@'] = join(__dirname, 'src');
+    return config;
   },
 };
 

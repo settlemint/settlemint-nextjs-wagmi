@@ -2,78 +2,20 @@
 
 import { ConnectKitButton } from "connectkit";
 import { motion } from "framer-motion";
-import { GraphQLClient, gql } from "graphql-request";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
+import { fetchAttestations } from "../api/attestations";
+import { AttestationModal } from "../components/AttestationModal";
 import { AttestationsTable } from "../components/AttestationsTable";
-import type { Attestation, DecodedData, RawAttestation } from "../types/attestation";
-
-// Constants
-const EAS_INDEXER_URL = process.env.NEXT_PUBLIC_EAS_INDEXER_URL || '';
-const AUTH_TOKEN = process.env.NEXT_PUBLIC_AUTH_TOKEN || '';
-const SCHEMA_ID = "0xb63b9100d7506fe1cf467ce00a75e802c02214ad2a632e647a62628184b1c472";
-
-// GraphQL setup
-const graphqlClient = new GraphQLClient(EAS_INDEXER_URL, {
-  headers: { "x-auth-token": AUTH_TOKEN },
-});
-
-const ATTESTATIONS_QUERY = gql`
-  query FetchAttestations($schemaId: String!) {
-    attestations(where: { schemaId: { equals: $schemaId } }) {
-      id
-      decodedDataJson
-    }
-  }
-`;
-
-// Helper functions
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-const parseDecodedData = (data: any[]): DecodedData => {
-  const result: Partial<DecodedData> = {};
-  const stages = ["Farm", "Processing", "Export", "Import", "Roasting", "Retail"];
-
-  for (const { name, value } of data) {
-    switch (name) {
-      case "timestamp":
-        result.timestamp = value.value.hex ? Number.parseInt(value.value.hex, 16) : undefined;
-        break;
-      case "stage":
-        result.stage = typeof value.value === 'number' ? value.value : stages.indexOf(value.value);
-        break;
-      case "batchId":
-      case "attester":
-      case "location":
-      case "certifications":
-      case "details":
-      case "previousAttestationId":
-        result[name as keyof DecodedData] = value.value;
-        break;
-    }
-  }
-
-  return result as DecodedData;
-};
-
-const fetchAttestations = async (): Promise<Attestation[]> => {
-  try {
-    const data = await graphqlClient.request<{ attestations: RawAttestation[] }>(ATTESTATIONS_QUERY, { schemaId: SCHEMA_ID });
-    return data.attestations.map(attestation => ({
-      id: attestation.id,
-      decodedData: parseDecodedData(JSON.parse(attestation.decodedDataJson))
-    }));
-  } catch (error) {
-    console.error("Error fetching attestations:", error);
-    return [];
-  }
-};
+import type { Attestation } from "../types/attestation";
 
 // Component
 export default function Home() {
   const { status: accountStatus } = useAccount();
   const [attestations, setAttestations] = useState<Attestation[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const loadAttestations = async () => {
@@ -102,6 +44,7 @@ export default function Home() {
               <a href="/" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">Home</a>
               <a href="/about" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">About</a>
               <a href="/blog" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">All Batches</a>
+              <a href="/browse" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">Browse Attestations</a>
             </div>
             <div className="flex items-center space-x-4">
               <input type="text" placeholder="Search..." className="px-4 py-2 rounded-lg bg-transparent" />
@@ -136,12 +79,26 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-semibold mb-6 text-white">
-            Recent Attestations
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold text-white">
+              Recent Attestations
+            </h2>
+            <button
+              type="button" // Added type prop
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Create Attestation
+            </button>
+          </div>
           <AttestationsTable attestations={attestations} columns={columns} />
         </motion.div>
       </main>
+
+      <AttestationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
 
       <footer className="bg-[#333333] text-white py-4 mt-auto">
         <div className="container mx-auto text-center text-sm">
