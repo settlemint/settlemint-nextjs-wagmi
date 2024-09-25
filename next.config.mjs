@@ -24,6 +24,15 @@ const nextConfig = {
     config.resolve.alias['@'] = join(__dirname, 'src');
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+    domains: ['img.freepik.com'],
+  },
 };
 
 export default nextConfig;

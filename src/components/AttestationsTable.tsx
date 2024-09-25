@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { motion } from "framer-motion";
+import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useState } from 'react';
 
@@ -75,6 +76,7 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
   defaultFilterColumn = "",
   defaultFilterValue = "",
 }) => {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [filterColumn, setFilterColumn] = useState(defaultFilterColumn);
   const [filterValue, setFilterValue] = useState(defaultFilterValue);
@@ -103,6 +105,10 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
   );
 
   const totalPages = Math.ceil(sortedAttestations.length / itemsPerPage);
+
+  const handleRowClick = (attestationId: string) => {
+    router.push(`/attestation/${attestationId}`);
+  };
 
   return (
     <div>
@@ -169,7 +175,8 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="hover:bg-[#3A3A3A] transition-colors duration-150"
+                className="hover:bg-[#3A3A3A] transition-colors duration-150 cursor-pointer"
+                onClick={() => handleRowClick(attestation.id)}
               >
                 <td className="py-3 px-3 border-b border-[#444444] truncate">
                   <div className="whitespace-nowrap overflow-hidden overflow-ellipsis" title={attestation.id}>

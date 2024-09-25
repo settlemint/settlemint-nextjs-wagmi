@@ -12,6 +12,7 @@ export interface DecodedData {
 export interface Attestation {
   id: string;
   decodedData: DecodedData;
+  txid: string;
 }
 
 export interface RawAttestation {

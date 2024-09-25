@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion";
-import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
@@ -10,6 +9,12 @@ import { AttestationModal } from "../components/AttestationModal";
 import { AttestationsTable } from "../components/AttestationsTable";
 import { NavBar } from "../components/NavBar";
 import type { Attestation } from "../types/attestation";
+
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
 
 export default function Home() {
   const { status: accountStatus } = useAccount();
@@ -40,48 +45,39 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2C2C2C] font-light text-gray-100">
-      <Head>
-        <title>Coffee Batch Tracker</title>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
-      </Head>
-
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2A2A2A] font-sans text-[#F5F5F5]">
       <NavBar />
 
-      <div className="relative bg-cover bg-center h-[70vh]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1690983331198-b32a245b13cc?q=80&w=2370&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}>
-        <div className="absolute inset-0 bg-black opacity-60" />
+      <div className="relative bg-cover bg-center h-[70vh]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1414808549009-35951c724e9f?q=80&w=2370&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}>
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] to-transparent" />
         <div className="container mx-auto flex flex-col justify-center h-full relative z-10 p-6">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-white max-w-2xl"
+            className="max-w-2xl"
           >
-            <h1 className="text-6xl font-extrabold tracking-tight mb-4">
+            <h1 className="text-4xl font-bold tracking-tight mb-2 font-poppins">
               Coffee Beans Tracker
             </h1>
-            <p className="text-xl mt-4 opacity-90 leading-relaxed">
-              Track the journey of your coffee beans from farm to cup. Ensure every sip you take supports ethical and sustainable practices.
+            <p className="text-lg mt-2 opacity-90 leading-relaxed">
+              Track the journey of your coffee beans from farm to cup.
             </p>
-            <Link href="/browse" className="inline-block mt-8 px-8 py-3 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-colors duration-200 text-lg font-semibold">
+            <Link href="/browse" className="inline-block mt-4 px-6 py-2 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-all duration-300 text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1">
               Explore Coffee Journeys
             </Link>
           </motion.div>
         </div>
       </div>
 
-      <main className="flex-grow container mx-auto my-16 px-4">
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-16 bg-[#2A2A2A] p-8 rounded-lg shadow-2xl"
-        >
-          <h2 className="text-4xl font-bold text-[#D4A574] mb-6">Coffee Journey Tracking</h2>
+      <main className="flex-grow container mx-auto my-12 px-4">
+        <motion.section {...fadeIn} className="mb-16 bg-[#2A2A2A] p-8 rounded-lg shadow-2xl">
+          <h2 className="text-4xl font-bold text-[#D4A574] mb-6 font-poppins">Coffee Journey Tracking</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-[#333333] p-6 rounded-lg">
-              <h3 className="text-2xl font-semibold text-[#D4A574] mb-4">What We Track</h3>
-              <ul className="space-y-3 text-gray-200">
+            <div className="bg-[#333333] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+              <h3 className="text-2xl font-semibold text-[#D4A574] mb-4 font-poppins">What We Track</h3>
+              <ul className="space-y-3 text-[#F5F5F5]">
                 {["Batch ID", "Processing Stage", "Location", "Certifications", "Timestamp", "Details"].map((item) => (
                   <li key={item} className="flex items-center">
                     <svg className="w-5 h-5 mr-2 text-[#D4A574]" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -92,34 +88,30 @@ export default function Home() {
                 ))}
               </ul>
             </div>
-            <div className="bg-[#333333] p-6 rounded-lg">
-              <h3 className="text-2xl font-semibold text-[#D4A574] mb-4">How to Use</h3>
-              <p className="text-gray-200 mb-4 leading-relaxed">
+            <div className="bg-[#333333] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+              <h3 className="text-2xl font-semibold text-[#D4A574] mb-4 font-poppins">How to Use</h3>
+              <p className="text-[#F5F5F5] mb-4 leading-relaxed">
                 Explore recent attestations below to see the latest updates on coffee batches. Each entry represents a step in a coffee batch's journey.
               </p>
-              <p className="text-gray-200 mb-4 leading-relaxed">
+              <p className="text-[#F5F5F5] mb-4 leading-relaxed">
                 For a comprehensive view with advanced sorting and filtering, visit our <Link href="/browse" className="text-[#D4A574] hover:underline font-semibold">Browse page</Link>.
               </p>
-              <p className="text-gray-200 leading-relaxed">
+              <p className="text-[#F5F5F5] leading-relaxed">
                 Part of the coffee supply chain? Contribute by adding new attestations using the "Create Attestation" button.
               </p>
             </div>
           </div>
         </motion.section>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
+        <motion.div {...fadeIn}>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-[#D4A574]">
+            <h2 className="text-3xl font-bold text-[#D4A574] font-poppins">
               Recent Attestations
             </h2>
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="px-6 py-3 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-colors duration-200 text-lg font-semibold"
+              className="px-6 py-3 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-all duration-300 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
               Create Attestation
             </button>
@@ -145,10 +137,10 @@ export default function Home() {
         onSuccess={handleAttestationCreated}
       />
 
-      <footer className="bg-[#1A1A1A] text-gray-400 py-8 mt-auto">
+      <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-8 mt-auto">
         <div className="container mx-auto text-center">
           <p className="text-lg">&copy; 2024 Coffee Batch Tracker. All rights reserved.</p>
-          <p className="mt-2 text-sm">Ensuring transparency and sustainability in every cup.</p>
+          <p className="mt-2 text-sm opacity-75">Ensuring transparency and sustainability in every cup.</p>
         </div>
       </footer>
     </div>

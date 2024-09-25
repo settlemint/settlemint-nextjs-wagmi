@@ -4,9 +4,9 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const EAS_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_EAS_CONTRACT_ADDRESS;
-const BLOCKCHAIN_NODE = `${process.env.BLOCKCHAIN_NODE}/${process.env.BTP_TOKEN}`;
+const BLOCKCHAIN_NODE = `${process.env.NEXT_PUBLIC_BLOCKCHAIN_NODE}/${process.env.NEXT_PUBLIC_AUTH_TOKEN}`;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const SCHEMA_UID = process.env.SCHEMA_UID; // Make sure this is set to your actual schema UID
+const SCHEMA_UID = process.env.NEXT_PUBLIC_SCHEMA_UID; // Make sure this is set to your actual schema UID
 
 interface AttestationDetails {
   uid: string;
@@ -105,7 +105,7 @@ export async function registerMultipleAttestations(count: number) {
     const attestationDetails: AttestationDetails[] = [];
 
     for (let i = 0; i < count; i++) {
-      const batchId = `BATCH-B-${i + 1}`;
+      const batchId = `BATCH-D-${i + 1}`;
       let previousAttestationId = ethers.ZeroHash;
 
       for (let stage = 0; stage < 6; stage++) {
@@ -126,7 +126,7 @@ export async function registerMultipleAttestations(count: number) {
 
 async function main() {
   try {
-    const attestationCount = 20; // This will create 2 complete coffee journeys, each with 6 stages
+    const attestationCount = 5; // This will create 2 complete coffee journeys, each with 6 stages
     const attestations = await registerMultipleAttestations(attestationCount);
     console.log(`Registered ${attestations.length} attestations`);
   } catch (error) {

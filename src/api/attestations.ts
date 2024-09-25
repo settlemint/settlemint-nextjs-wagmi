@@ -18,6 +18,16 @@ const ATTESTATIONS_QUERY = gql`
   }
 `;
 
+const ATTESTATION_BY_ID_QUERY = gql`
+  query FetchAttestationById($id: String!) {
+    attestation(where: { id: $id }) {
+      id
+      decodedDataJson
+      txid
+    }
+  }
+`;
+
 export const fetchAttestations = async (): Promise<Attestation[]> => {
   try {
     const data = await graphqlClient.request<{ attestations: RawAttestation[] }>(ATTESTATIONS_QUERY, {
@@ -106,4 +116,29 @@ export const createAttestation = async (
   console.log("Attestation details:", attestation);
 
   return attestation;
+};
+
+export const fetchAttestationById = async (id: string): Promise<Attestation | null> => {
+  try {
+    const data = await graphqlClient.request<{ attestation: RawAttestation }>(ATTESTATION_BY_ID_QUERY, { id });
+
+    if (!data || !data.attestation || !data.attestation.decodedDataJson) {
+      console.error("Invalid API response structure or empty decodedDataJson:", data);
+      return null;
+    }
+
+    const parsedData = JSON.parse(data.attestation.decodedDataJson);
+    return {
+      id: data.attestation.id,
+      decodedData: parseDecodedData(parsedData),
+      txid: data.attestation.txid,
+    };
+  } catch (error) {
+    console.error("Error fetching attestation by ID:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    return null;
+  }
 };

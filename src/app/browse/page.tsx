@@ -1,10 +1,17 @@
 "use client"
 
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { fetchAttestations } from "../../api/attestations";
 import { AttestationsTable } from "../../components/AttestationsTable";
 import { NavBar } from "../../components/NavBar";
 import type { Attestation } from "../../types/attestation";
+
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
 
 export default function BrowsePage() {
   const [attestations, setAttestations] = useState<Attestation[]>([]);
@@ -24,25 +31,30 @@ export default function BrowsePage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#1A1A1A] font-light">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2A2A2A] font-sans text-[#F5F5F5]">
       <NavBar />
       <main className="flex-grow container mx-auto my-12 px-4">
-        <h1 className="text-3xl font-semibold text-white mb-6">Browse Attestations</h1>
-        <AttestationsTable
-          attestations={attestations}
-          columns={columns}
-          enableSorting={true}
-          enableFiltering={true}
-          enablePagination={true}
-          rowsPerPage={25}
-          defaultSortColumn="timestamp"
-          defaultSortDirection="desc"
-        />
+        <motion.div {...fadeIn}>
+          <h1 className="text-4xl font-bold text-[#D4A574] mb-6 font-poppins">Browse Attestations</h1>
+          <div className="bg-[#2A2A2A] p-6 rounded-lg shadow-xl">
+            <AttestationsTable
+              attestations={attestations}
+              columns={columns}
+              enableSorting={true}
+              enableFiltering={true}
+              enablePagination={true}
+              rowsPerPage={25}
+              defaultSortColumn="timestamp"
+              defaultSortDirection="desc"
+            />
+          </div>
+        </motion.div>
       </main>
 
-      <footer className="bg-[#333333] text-white py-4 mt-auto">
-        <div className="container mx-auto text-center text-sm">
-          &copy; 2024 Coffee Batch Tracker. All rights reserved.
+      <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-8 mt-auto">
+        <div className="container mx-auto text-center">
+          <p className="text-lg">&copy; 2024 Coffee Batch Tracker. All rights reserved.</p>
+          <p className="mt-2 text-sm opacity-75">Ensuring transparency and sustainability in every cup.</p>
         </div>
       </footer>
     </div>
