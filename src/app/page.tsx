@@ -1,6 +1,5 @@
 "use client"
 
-import { ConnectKitButton } from "connectkit";
 import { motion } from "framer-motion";
 import Head from "next/head";
 import { useEffect, useState } from "react";
@@ -8,6 +7,7 @@ import { useAccount } from "wagmi";
 import { fetchAttestations } from "../api/attestations";
 import { AttestationModal } from "../components/AttestationModal";
 import { AttestationsTable } from "../components/AttestationsTable";
+import { NavBar } from "../components/NavBar";
 import type { Attestation } from "../types/attestation";
 
 // Component
@@ -37,22 +37,10 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
 
-      <header className="relative bg-cover bg-center h-[60vh]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1690983331198-b32a245b13cc?q=80&w=2370&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}>
-        <nav className="absolute top-0 left-0 right-0 bg-[#1A1A1A] bg-opacity-80 p-4 shadow-lg z-20">
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <a href="/" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">Home</a>
-              <a href="/about" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">About</a>
-              <a href="/blog" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">All Batches</a>
-              <a href="/browse" className="text-white text-lg font-semibold hover:text-gray-300 transition-colors duration-200">Browse Attestations</a>
-            </div>
-            <div className="flex items-center space-x-4">
-              <input type="text" placeholder="Search..." className="px-4 py-2 rounded-lg bg-transparent" />
-              <ConnectKitButton />
-            </div>
-          </div>
-        </nav>
-        <div className="absolute inset-0 bg-black opacity-50 z-10" />
+      <NavBar />
+
+      <div className="relative bg-cover bg-center h-[60vh]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1690983331198-b32a245b13cc?q=80&w=2370&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}>
+        <div className="absolute inset-0 bg-black opacity-50" />
         <div className="container mx-auto flex flex-col justify-center h-full relative z-10 p-6">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -71,7 +59,7 @@ export default function Home() {
             </button>
           </motion.div>
         </div>
-      </header>
+      </div>
 
       <main className="flex-grow container mx-auto my-12 px-4">
         <motion.div

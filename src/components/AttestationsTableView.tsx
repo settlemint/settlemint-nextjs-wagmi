@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { fetchAttestations } from "../api/attestations";
 import type { Attestation } from "../types/attestation";
