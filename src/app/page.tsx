@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { fetchAttestations } from "../api/attestations";
 import { AttestationModal } from "../components/AttestationModal";
@@ -17,18 +17,31 @@ export default function Home() {
   const [columns, setColumns] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    const loadAttestations = async () => {
-      const fetchedAttestations = await fetchAttestations();
-      setAttestations(fetchedAttestations);
+  const loadAttestations = useCallback(async () => {
+    const fetchedAttestations = await fetchAttestations();
+    // Sort attestations by timestamp in descending order
+    const sortedAttestations = fetchedAttestations.sort((a, b) =>
+      b.decodedData.timestamp - a.decodedData.timestamp
+    );
+    setAttestations(sortedAttestations);
 
-      if (fetchedAttestations.length > 0) {
-        setColumns(Object.keys(fetchedAttestations[0].decodedData));
-      }
-    };
-
-    loadAttestations();
+    if (sortedAttestations.length > 0) {
+      setColumns(Object.keys(sortedAttestations[0].decodedData));
+    }
   }, []);
+
+  useEffect(() => {
+    loadAttestations();
+  }, [loadAttestations]);
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleAttestationCreated = () => {
+    loadAttestations();
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#1A1A1A] font-light">
@@ -72,20 +85,30 @@ export default function Home() {
               Recent Attestations
             </h2>
             <button
-              type="button" // Added type prop
+              type="button"
               onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-[#8B4513] text-white rounded hover:bg-[#A0522D] transition-colors duration-200"
             >
               Create Attestation
             </button>
           </div>
-          <AttestationsTable attestations={attestations} columns={columns} />
+          <AttestationsTable
+            attestations={attestations}
+            columns={columns}
+            enableSorting={false}
+            enableFiltering={false}
+            enablePagination={false}
+            rowsPerPage={5}
+            defaultSortColumn="timestamp"
+            defaultSortDirection="desc"
+          />
         </motion.div>
       </main>
 
       <AttestationModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
+        onSuccess={handleAttestationCreated}
       />
 
       <footer className="bg-[#333333] text-white py-4 mt-auto">

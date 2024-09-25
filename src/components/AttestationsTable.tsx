@@ -22,7 +22,30 @@ interface Attestation {
 interface AttestationsTableProps {
   attestations: Attestation[];
   columns: string[];
+  enableSorting?: boolean;
+  enableFiltering?: boolean;
+  enablePagination?: boolean;
+  rowsPerPage?: number;
+  defaultSortColumn?: string;
+  defaultSortDirection?: "asc" | "desc";
+  defaultFilterColumn?: string;
+  defaultFilterValue?: string;
 }
+
+const prettyColumnNames: { [key: string]: string } = {
+  batchId: "Batch ID",
+  timestamp: "Timestamp",
+  attester: "Attester",
+  stage: "Stage",
+  location: "Location",
+  certifications: "Certifications",
+  details: "Details",
+  previousAttestationId: "Previous Attestation ID"
+};
+
+const getPrettyColumnName = (column: string): string => {
+  return prettyColumnNames[column] || column;
+};
 
 const renderValue = (key: string, value: unknown): React.ReactNode => {
   if (key === 'timestamp' && typeof value === 'number') {
@@ -40,14 +63,24 @@ const renderValue = (key: string, value: unknown): React.ReactNode => {
   return String(value);
 };
 
-export const AttestationsTable: React.FC<AttestationsTableProps> = ({ attestations, columns }) => {
+export const AttestationsTable: React.FC<AttestationsTableProps> = ({
+  attestations,
+  columns,
+  enableSorting = false,
+  enableFiltering = false,
+  enablePagination = false,
+  rowsPerPage = 5,
+  defaultSortColumn = "",
+  defaultSortDirection = "asc",
+  defaultFilterColumn = "",
+  defaultFilterValue = "",
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterColumn, setFilterColumn] = useState("");
-  const [filterValue, setFilterValue] = useState("");
-  const [sortColumn, setSortColumn] = useState("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
-  const itemsPerPage = 5;
+  const [filterColumn, setFilterColumn] = useState(defaultFilterColumn);
+  const [filterValue, setFilterValue] = useState(defaultFilterValue);
+  const [sortColumn, setSortColumn] = useState(defaultSortColumn);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSortDirection);
+  const [itemsPerPage, setItemsPerPage] = useState(rowsPerPage);
 
   const filteredAttestations = attestations.filter(attestation => {
     if (!filterColumn || !filterValue) return true;
@@ -73,49 +106,59 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({ attestatio
 
   return (
     <div>
-      <div className="mb-4 flex space-x-4">
-        <select
-          className="bg-[#333333] text-white p-2 rounded"
-          value={filterColumn}
-          onChange={(e) => setFilterColumn(e.target.value)}
-        >
-          <option value="">Select column to filter</option>
-          {columns.map((column) => (
-            <option key={column} value={column}>{column}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="Filter value"
-          className="bg-[#333333] text-white p-2 rounded"
-          value={filterValue}
-          onChange={(e) => setFilterValue(e.target.value)}
-        />
-        <select
-          className="bg-[#333333] text-white p-2 rounded"
-          value={sortColumn}
-          onChange={(e) => setSortColumn(e.target.value)}
-        >
-          <option value="">Select column to sort</option>
-          {columns.map((column) => (
-            <option key={column} value={column}>{column}</option>
-          ))}
-        </select>
-        <button
-          className="bg-[#333333] text-white p-2 rounded"
-          onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-          type="button"
-        >
-          {sortDirection === "asc" ? "▲" : "▼"}
-        </button>
-      </div>
+      {(enableFiltering || enableSorting) && (
+        <div className="flex justify-between mb-4">
+          {enableFiltering && (
+            <div className="flex space-x-2">
+              <select
+                className="bg-[#333333] text-white p-2 rounded text-sm"
+                value={filterColumn}
+                onChange={(e) => setFilterColumn(e.target.value)}
+              >
+                <option value="">Filter column</option>
+                {columns.map((column) => (
+                  <option key={column} value={column}>{getPrettyColumnName(column)}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Filter value"
+                className="bg-[#333333] text-white p-2 rounded text-sm"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+              />
+            </div>
+          )}
+          {enableSorting && (
+            <div className="flex space-x-2">
+              <select
+                className="bg-[#333333] text-white p-2 rounded text-sm"
+                value={sortColumn}
+                onChange={(e) => setSortColumn(e.target.value)}
+              >
+                <option value="">Sort column</option>
+                {columns.map((column) => (
+                  <option key={column} value={column}>{getPrettyColumnName(column)}</option>
+                ))}
+              </select>
+              <button
+                className="bg-[#333333] text-white p-2 rounded text-sm"
+                onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                type="button"
+              >
+                {sortDirection === "asc" ? "Asc ▲" : "Desc ▼"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <div className="overflow-x-auto rounded-lg shadow-xl">
         <table className="w-full bg-[#2A2A2A] text-white table-fixed">
           <thead>
             <tr className="bg-[#333333] text-white">
               <th className="py-4 px-3 text-left w-36 truncate">ID</th>
               {columns.map((column) => (
-                <th key={column} className="py-4 px-3 text-left w-40 truncate">{column}</th>
+                <th key={column} className="py-4 px-3 text-left w-40 truncate">{getPrettyColumnName(column)}</th>
               ))}
             </tr>
           </thead>
@@ -145,25 +188,37 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({ attestatio
           </tbody>
         </table>
       </div>
-      <div className="mt-4 flex justify-between items-center text-white">
-        <button
-          className="bg-[#333333] p-2 rounded"
-          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          type="button"
-        >
-          Previous
-        </button>
-        <span>Page {currentPage} of {totalPages}</span>
-        <button
-          className="bg-[#333333] p-2 rounded"
-          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          type="button"
-        >
-          Next
-        </button>
-      </div>
+      {enablePagination && (
+        <div className="mt-4 flex justify-between items-center text-white">
+          <button
+            className="bg-[#333333] p-2 rounded text-sm"
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            type="button"
+          >
+            Previous
+          </button>
+          <span className="text-sm">Page {currentPage} of {totalPages}</span>
+          <select
+            className="bg-[#333333] text-white p-2 rounded text-sm"
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+          >
+            <option value="5">5 rows</option>
+            <option value="10">10 rows</option>
+            <option value="25">25 rows</option>
+            <option value="50">50 rows</option>
+          </select>
+          <button
+            className="bg-[#333333] p-2 rounded text-sm"
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            type="button"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
