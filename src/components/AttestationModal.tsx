@@ -2,14 +2,16 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { createAttestation } from '../api/attestations';
+import type { DecodedData } from '../types/attestation';
 
 interface AttestationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSubmit: (newAttestation: DecodedData) => void; // Add this line
+  mode: string;
 }
 
-export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, onSubmit, mode }) => {
   const [batchId, setBatchId] = useState('');
   const [stage, setStage] = useState(0);
   const [location, setLocation] = useState('');
@@ -31,7 +33,6 @@ export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onCl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submit button clicked");
     if (!address || !isFormValid) {
       console.log("Form is not valid or address is missing");
       return;
@@ -39,10 +40,25 @@ export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onCl
 
     setIsSubmitting(true);
     try {
-      console.log("Attempting to create attestation", { batchId, stage, location, certifications, details, address });
-      await createAttestation(batchId, stage, location, certifications, details, address);
+      const certificationsArray = certifications.split(',').map(cert => cert.trim());
+      const timestamp = Math.floor(Date.now() / 1000);
+      const previousAttestationId = '0x0000000000000000000000000000000000000000000000000000000000000000'; // Placeholder
+
+      console.log("Attempting to create attestation", { batchId, stage, location, certifications: certificationsArray, details, attester: address, previousAttestationId, timestamp });
+
+      await createAttestation(
+        batchId,
+        stage,
+        location,
+        certificationsArray,
+        details,
+        address,
+        previousAttestationId,
+        timestamp
+      );
+
       console.log("Attestation created successfully");
-      onSuccess?.();
+      onSubmit({ batchId, stage, location, certifications: certificationsArray, details, attester: address, previousAttestationId, timestamp });
       onClose();
     } catch (error) {
       console.error("Error creating attestation:", error);

@@ -14,6 +14,7 @@ const ATTESTATIONS_QUERY = gql`
     attestations(where: { schemaId: { equals: $schemaId } }) {
       id
       decodedDataJson
+      txid
     }
   }
 `;
@@ -71,9 +72,11 @@ export const createAttestation = async (
   batchId: string,
   stage: number,
   location: string,
-  certifications: string,
+  certifications: string[],
   details: string,
-  address: string,
+  attester: string,
+  previousAttestationId: string,
+  timestamp: number,
 ) => {
   const eas = new EAS(EAS_CONTRACT_ADDRESS);
   const provider = new ethers.BrowserProvider(window.ethereum);
@@ -83,20 +86,16 @@ export const createAttestation = async (
   const schemaEncoder = new SchemaEncoder(
     "string batchId, uint256 timestamp, address attester, uint8 stage, string location, string[] certifications, string details, bytes32 previousAttestationId",
   );
-  const timestamp = Math.floor(Date.now() / 1000);
+
   const encodedData = schemaEncoder.encodeData([
     { name: "batchId", value: batchId, type: "string" },
     { name: "timestamp", value: timestamp, type: "uint256" },
-    { name: "attester", value: address, type: "address" },
+    { name: "attester", value: attester, type: "address" },
     { name: "stage", value: stage, type: "uint8" },
     { name: "location", value: location, type: "string" },
-    { name: "certifications", value: certifications.split(","), type: "string[]" },
+    { name: "certifications", value: certifications, type: "string[]" },
     { name: "details", value: details, type: "string" },
-    {
-      name: "previousAttestationId",
-      value: "0x0000000000000000000000000000000000000000000000000000000000000000",
-      type: "bytes32",
-    },
+    { name: "previousAttestationId", value: previousAttestationId, type: "bytes32" },
   ]);
 
   const tx = await eas.attest({
@@ -140,5 +139,27 @@ export const fetchAttestationById = async (id: string): Promise<Attestation | nu
       console.error("Error stack:", error.stack);
     }
     return null;
+  }
+};
+
+export const fetchTotalAttestations = async (): Promise<number> => {
+  try {
+    const data = await graphqlClient.request<{ attestations: RawAttestation[] }>(ATTESTATIONS_QUERY, {
+      schemaId: SCHEMA_ID,
+    });
+
+    if (typeof data.attestations.length !== "number") {
+      console.error("Invalid API response structure for total attestations:", data);
+      return 0;
+    }
+
+    return data.attestations.length;
+  } catch (error) {
+    console.error("Error fetching total attestations:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    return 0;
   }
 };

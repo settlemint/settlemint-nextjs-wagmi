@@ -18,4 +18,5 @@ export interface Attestation {
 export interface RawAttestation {
   id: string;
   decodedDataJson: string;
+  txid: string;
 }

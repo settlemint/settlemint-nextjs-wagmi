@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { fetchAttestations } from "../api/attestations";
+import { fetchAttestations, fetchTotalAttestations } from "../api/attestations";
 import { AttestationModal } from "../components/AttestationModal";
 import { AttestationsTable } from "../components/AttestationsTable";
 import { CreateAttestationButton } from "../components/CreateAttestationButton";
@@ -22,6 +22,7 @@ export default function Home() {
   const [attestations, setAttestations] = useState<Attestation[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [totalAttestations, setTotalAttestations] = useState<number | null>(null);
 
   const loadAttestations = useCallback(async () => {
     const fetchedAttestations = await fetchAttestations();
@@ -33,6 +34,9 @@ export default function Home() {
     if (sortedAttestations.length > 0) {
       setColumns(Object.keys(sortedAttestations[0].decodedData));
     }
+
+    const total = await fetchTotalAttestations();
+    setTotalAttestations(total);
   }, []);
 
   useEffect(() => {
@@ -76,29 +80,52 @@ export default function Home() {
         <motion.section {...fadeIn} className="mb-16 bg-[#2A2A2A] p-8 rounded-lg shadow-2xl">
           <h2 className="text-4xl font-bold text-[#D4A574] mb-6 font-poppins">Coffee Journey Tracking</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-[#333333] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-2xl font-semibold text-[#D4A574] mb-4 font-poppins">What We Track</h3>
-              <ul className="space-y-3 text-[#F5F5F5]">
-                {["Batch ID", "Processing Stage", "Location", "Certifications", "Timestamp", "Details"].map((item) => (
-                  <li key={item} className="flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-[#D4A574]" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            <div className="space-y-6">
+              <div className="bg-[#333333] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h3 className="text-2xl font-semibold text-[#D4A574] mb-4 font-poppins">What We Track</h3>
+                <ul className="space-y-2 text-[#F5F5F5]">
+                  {["Batch ID", "Processing Stage", "Location", "Certifications", "Timestamp", "Details"].map((item) => (
+                    <li key={item} className="flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-[#D4A574]" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-[#333333] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h3 className="text-2xl font-semibold text-[#D4A574] mb-4 font-poppins">Journey Milestones</h3>
+                {totalAttestations !== null ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-3xl font-bold text-[#F5F5F5]">{totalAttestations.toLocaleString()}</p>
+                      <p className="text-sm text-[#D4A574]">Coffee Journeys Tracked</p>
+                    </div>
+                    <svg className="w-12 h-12 text-[#D4A574]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                ) : (
+                  <div className="flex justify-center items-center h-16">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#D4A574]" />
+                  </div>
+                )}
+              </div>
             </div>
             <div className="bg-[#333333] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-2xl font-semibold text-[#D4A574] mb-4 font-poppins">How to Use</h3>
               <p className="text-[#F5F5F5] mb-4 leading-relaxed">
-                Explore recent attestations below to see the latest updates on coffee batches. Each entry represents a step in a coffee batch's journey.
+                Explore recent attestations below to see the latest updates on coffee batches. Each entry represents a step in a coffee batch's journey, from farm to cup.
               </p>
               <p className="text-[#F5F5F5] mb-4 leading-relaxed">
-                For a comprehensive view with advanced sorting and filtering, visit our <Link href="/browse" className="text-[#D4A574] hover:underline font-semibold">Browse page</Link>.
+                For a comprehensive view with advanced sorting and filtering options, visit our <Link href="/browse" className="text-[#D4A574] hover:underline font-semibold">Browse page</Link>.
+              </p>
+              <p className="text-[#F5F5F5] mb-4 leading-relaxed">
+                Part of the coffee supply chain? Contribute by adding new attestations using the "Create Attestation" button. Track stages including Farm, Processing, Export, Import, Roasting, and Retail.
               </p>
               <p className="text-[#F5F5F5] leading-relaxed">
-                Part of the coffee supply chain? Contribute by adding new attestations using the "Create Attestation" button.
+                View detailed information for each attestation, including location, certifications, and specific details to ensure transparency throughout the coffee's journey.
               </p>
             </div>
           </div>
@@ -128,8 +155,9 @@ export default function Home() {
 
       <AttestationModal
         isOpen={isModalOpen}
-        onClose={handleModalClose}
-        onSuccess={handleAttestationCreated}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAttestationCreated}
+        mode="create"
       />
 
       <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-8 mt-auto">

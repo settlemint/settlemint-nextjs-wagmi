@@ -76,6 +76,11 @@ export function SearchBar() {
                 key={attestation.id}
                 className="p-2 hover:bg-[#3A3A3A] cursor-pointer text-white"
                 onClick={() => handleAttestationClick(attestation.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleAttestationClick(attestation.id);
+                  }
+                }}
               >
                 {attestation.decodedData.batchId} - {stageNames[attestation.decodedData.stage]}
               </div>
