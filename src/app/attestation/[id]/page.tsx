@@ -16,6 +16,20 @@ const fadeIn = {
 };
 
 const stageNames = ['Farm', 'Processing', 'Export', 'Import', 'Roasting', 'Retail'];
+const stageIcons = ["🌱", "🏭", "🚢", "🛬", "☕", "🛒"];
+const stageColors = ["bg-[#8B4513]", "bg-[#A0522D]", "bg-[#CD853F]", "bg-[#DEB887]", "bg-[#D2691E]", "bg-[#B8860B]"];
+
+const StageDisplay: React.FC<{ stage: number }> = ({ stage }) => {
+  const stageName = stageNames[stage] || String(stage);
+  const icon = stageIcons[stage] || "❓";
+  const color = stageColors[stage] || "bg-[#4A4A4A]";
+  
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${color} text-white`}>
+      {icon} {stageName}
+    </span>
+  );
+};
 
 export default function AttestationDetailPage() {
   const { id } = useParams();
@@ -93,7 +107,7 @@ export default function AttestationDetailPage() {
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#D4A574] mb-4 font-poppins">Coffee Journey</h1>
             <h2 className="text-2xl font-semibold text-[#E6BE8A] mb-2 font-poppins">Batch ID: {attestation.decodedData.batchId}</h2>
-            <p className="text-lg text-[#F5F5F5] mb-4">Current Stage: {stageNames[currentStage]}</p>
+            <p className="text-lg text-[#F5F5F5] mb-4">Current Stage: <StageDisplay stage={currentStage} /></p>
             <div className="w-full bg-[#444444] rounded-full h-2.5 mb-4">
               <div
                 className="bg-[#D4A574] h-2.5 rounded-full transition-all duration-500 ease-out"
@@ -124,7 +138,7 @@ export default function AttestationDetailPage() {
             <h3 className="text-xl font-medium text-[#D4A574] mb-4 font-poppins">Certifications</h3>
             <div className="flex flex-wrap gap-2 mb-6">
               {attestation.decodedData.certifications.map((cert) => (
-                <span key={cert} className="bg-[#D4A574] text-[#1A1A1A] px-3 py-1 rounded-full text-sm font-semibold">
+                <span key={cert} className="bg-[#4A4A4A] text-[#D4A574] px-3 py-1 rounded-full text-sm font-semibold">
                   {cert}
                 </span>
               ))}

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 import { useAccount } from "wagmi";
 
@@ -8,22 +9,27 @@ interface CreateAttestationButtonProps {
 
 export function CreateAttestationButton({ onClick, className = "" }: CreateAttestationButtonProps) {
   const { isConnected } = useAccount();
+  const [isEnabled, setIsEnabled] = useState(false);
+
+  useEffect(() => {
+    setIsEnabled(isConnected);
+  }, [isConnected]);
 
   return (
     <>
       <button
         type="button"
         onClick={onClick}
-        disabled={!isConnected}
-        data-tooltip-id={!isConnected ? "create-attestation-tooltip" : undefined}
-        data-tooltip-content="Please connect your wallet to create an attestation"
+        disabled={!isEnabled}
+        data-tooltip-id={!isEnabled ? "create-attestation-tooltip" : undefined}
+        data-tooltip-content="Please connect your wallet to create an entry"
         className={`px-6 py-3 bg-[#D4A574] text-[#1A1A1A] rounded-lg transition-all duration-300 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
-          isConnected ? "hover:bg-[#E6BE8A]" : "opacity-50 cursor-not-allowed"
+          isEnabled ? "hover:bg-[#E6BE8A]" : "opacity-50 cursor-not-allowed"
         } ${className}`}
       >
         Create Entry
       </button>
-      {!isConnected && <Tooltip id="create-attestation-tooltip" />}
+      {!isEnabled && <Tooltip id="create-attestation-tooltip" />}
     </>
   );
 }

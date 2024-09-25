@@ -4,6 +4,17 @@ import { useAccount } from 'wagmi';
 import { createAttestation } from '../api/attestations';
 import type { DecodedData } from '../types/attestation';
 
+const stageNames = ["Farm", "Processing", "Export", "Import", "Roasting", "Retail"];
+const stageIcons = ["🌱", "🏭", "🚢", "🛬", "☕", "🛒"];
+const stageColors = [
+  "bg-[#8B4513]", // Farm (Dark brown)
+  "bg-[#A0522D]", // Processing (Sienna)
+  "bg-[#CD853F]", // Export (Peru)
+  "bg-[#DEB887]", // Import (Burlywood)
+  "bg-[#D2691E]", // Roasting (Chocolate)
+  "bg-[#B8860B]"  // Retail (Dark goldenrod)
+];
+
 interface AttestationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -99,8 +110,10 @@ export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onCl
               className="w-full bg-[#333333] text-white p-2 rounded"
               disabled={isSubmitting}
             >
-              {["Farm", "Processing", "Export", "Import", "Roasting", "Retail"].map((stageName, index) => (
-                <option key={stageName} value={index}>{stageName}</option>
+              {stageNames.map((stageName, index) => (
+                <option key={stageName} value={index}>
+                  {stageIcons[index]} {stageName}
+                </option>
               ))}
             </select>
           </div>

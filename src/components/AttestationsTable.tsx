@@ -48,18 +48,50 @@ const getPrettyColumnName = (column: string): string => {
   return prettyColumnNames[column] || column;
 };
 
+const stageNames = ["Farm", "Processing", "Export", "Import", "Roasting", "Retail"];
+const stageIcons = ["🌱", "🏭", "🚢", "🛬", "☕", "🛒"];
+const stageColors = [
+  "bg-[#8B4513]", // Farm (Dark brown)
+  "bg-[#A0522D]", // Processing (Sienna)
+  "bg-[#CD853F]", // Export (Peru)
+  "bg-[#DEB887]", // Import (Burlywood)
+  "bg-[#D2691E]", // Roasting (Chocolate)
+  "bg-[#B8860B]"  // Retail (Dark goldenrod)
+];
+
 const renderValue = (key: string, value: unknown): React.ReactNode => {
   if (key === 'timestamp' && typeof value === 'number') {
     return format(new Date(value * 1000), 'dd/MM/yyyy HH:mm:ss');
+  }
+  if (key === 'stage' && typeof value === 'number') {
+    const stageName = stageNames[value] || String(value);
+    const icon = stageIcons[value] || "❓";
+    const color = stageColors[value] || "bg-[#4A4A4A]";
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color} text-white`}>
+        {icon} {stageName}
+      </span>
+    );
+  }
+  if (key === 'certifications' && Array.isArray(value)) {
+    return (
+      <div className="flex items-center space-x-1">
+        {value.slice(0, 2).map((cert, index) => (
+          <span key={index} className="px-2 py-1 bg-[#4A4A4A] text-[#D4A574] rounded-full text-xs whitespace-nowrap">
+            {cert}
+          </span>
+        ))}
+        {value.length > 2 && (
+          <span className="text-xs text-[#D4A574]">+{value.length - 2}</span>
+        )}
+      </div>
+    );
   }
   if (typeof value === 'object' && value !== null) {
     if ('hex' in value && typeof value.hex === 'string') {
       return value.hex;
     }
     return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return value.join(", ");
   }
   return String(value);
 };
@@ -159,12 +191,12 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
         </div>
       )}
       <div className="overflow-x-auto rounded-lg shadow-xl">
-        <table className="w-full bg-[#2A2A2A] text-white table-fixed">
+        <table className="w-full bg-[#2A2A2A] text-white">
           <thead>
             <tr className="bg-[#333333] text-white">
-              <th className="py-4 px-3 text-left w-36 truncate">ID</th>
+              <th className="py-4 px-3 text-left whitespace-nowrap">ID</th>
               {columns.map((column) => (
-                <th key={column} className="py-4 px-3 text-left w-40 truncate">{getPrettyColumnName(column)}</th>
+                <th key={column} className="py-4 px-3 text-left whitespace-nowrap">{getPrettyColumnName(column)}</th>
               ))}
             </tr>
           </thead>
@@ -178,14 +210,14 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
                 className="hover:bg-[#3A3A3A] transition-colors duration-150 cursor-pointer"
                 onClick={() => handleRowClick(attestation.id)}
               >
-                <td className="py-3 px-3 border-b border-[#444444] truncate">
-                  <div className="whitespace-nowrap overflow-hidden overflow-ellipsis" title={attestation.id}>
+                <td className="py-3 px-3 border-b border-[#444444] whitespace-nowrap">
+                  <div className="max-w-[100px] overflow-hidden overflow-ellipsis" title={attestation.id}>
                     {`${attestation.id.slice(0, 8)}...${attestation.id.slice(-6)}`}
                   </div>
                 </td>
                 {columns.map((column) => (
-                  <td key={column} className="py-3 px-3 border-b border-[#444444] truncate">
-                    <div className="whitespace-nowrap overflow-hidden overflow-ellipsis" title={String(attestation.decodedData[column as keyof DecodedData])}>
+                  <td key={column} className="py-3 px-3 border-b border-[#444444] whitespace-nowrap">
+                    <div className="max-w-[200px] overflow-hidden overflow-ellipsis" title={String(attestation.decodedData[column as keyof DecodedData])}>
                       {renderValue(column, attestation.decodedData[column as keyof DecodedData] as React.ReactNode)}
                     </div>
                   </td>

@@ -87,7 +87,7 @@ export default function BrowsePage() {
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-[#2A2A2A] p-6 rounded-lg shadow-xl text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#D4A574] mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#D4A574] mx-auto mb-4"/>
             <p className="text-[#F5F5F5] text-lg">Creating attestation...</p>
           </div>
         </div>
