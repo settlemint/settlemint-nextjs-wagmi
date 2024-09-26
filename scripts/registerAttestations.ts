@@ -21,6 +21,50 @@ interface AttestationDetails {
   data: string;
 }
 
+const countries = {
+  production: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia"],
+  processing: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia"],
+  export: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia"],
+  import: ["USA", "Germany", "Japan", "Italy", "Canada"],
+  roasting: ["USA", "Germany", "Japan", "Italy", "Canada"],
+  retail: ["USA", "Germany", "Japan", "Italy", "Canada", "UK", "France", "Australia"],
+};
+
+const cities = {
+  Colombia: ["Bogotá", "Medellín", "Cali"],
+  Brazil: ["São Paulo", "Rio de Janeiro", "Belo Horizonte"],
+  Ethiopia: ["Addis Ababa", "Dire Dawa", "Bahir Dar"],
+  Vietnam: ["Ho Chi Minh City", "Hanoi", "Da Nang"],
+  Indonesia: ["Jakarta", "Surabaya", "Bandung"],
+  USA: ["Seattle", "New York", "San Francisco"],
+  Germany: ["Berlin", "Hamburg", "Munich"],
+  Japan: ["Tokyo", "Osaka", "Kyoto"],
+  Italy: ["Rome", "Milan", "Florence"],
+  Canada: ["Toronto", "Vancouver", "Montreal"],
+  UK: ["London", "Manchester", "Edinburgh"],
+  France: ["Paris", "Lyon", "Marseille"],
+  Australia: ["Sydney", "Melbourne", "Brisbane"],
+};
+
+const stages = ["Farm", "Processing", "Export", "Import", "Roasting", "Retail"];
+
+function generateBatchId() {
+  const year = new Date().getFullYear();
+  const randomLetters = Math.random().toString(36).substring(2, 5).toUpperCase();
+  const randomNumbers = Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(4, "0");
+  return `${year}-${randomLetters}-${randomNumbers}`;
+}
+
+function getRandomElement<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function getRandomCity(country: string): string {
+  return getRandomElement(cities[country as keyof typeof cities] || []);
+}
+
 async function initializeEAS() {
   if (!EAS_CONTRACT_ADDRESS || !BLOCKCHAIN_NODE || !PRIVATE_KEY) {
     throw new Error("Missing required environment variables");
@@ -41,20 +85,33 @@ async function createAttestation(
   stage: number,
   previousAttestationId: string,
   attesterAddress: string,
+  originCountry: string,
+  originCity: string,
+  destinationCountry: string,
+  destinationCity: string,
 ) {
   const timestamp = Math.floor(Date.now() / 1000);
-  const stages = ["Farm", "Processing", "Export", "Import", "Roasting", "Retail"];
-  const locations = ["Colombia", "Colombia", "Colombia", "USA", "USA", "USA"];
-  const certifications = ["Organic", "Fair Trade", "Rainforest Alliance"];
-  const details = `Details for ${stages[stage]} stage of batch ${batchId}`;
+  let location: string;
+
+  if (stage <= 2) {
+    location = `${originCity}, ${originCountry}`;
+  } else if (stage >= 3) {
+    location = `${destinationCity}, ${destinationCountry}`;
+  } else {
+    location = stage === 2 ? `${originCity}, ${originCountry}` : `${destinationCity}, ${destinationCountry}`;
+  }
+
+  const certifications = ["Organic", "Fair Trade", "Rainforest Alliance", "UTZ Certified", "Bird Friendly"];
+  const selectedCertifications = certifications.slice(0, Math.floor(Math.random() * 4) + 1);
+  const details = `Details for ${stages[stage]} stage of batch ${batchId} in ${location}`;
 
   const encodedData = schemaEncoder.encodeData([
     { name: "batchId", value: batchId, type: "string" },
     { name: "timestamp", value: timestamp, type: "uint256" },
     { name: "attester", value: attesterAddress, type: "address" },
     { name: "stage", value: stage, type: "uint8" },
-    { name: "location", value: locations[stage], type: "string" },
-    { name: "certifications", value: certifications.slice(0, stage + 1), type: "string[]" },
+    { name: "location", value: location, type: "string" },
+    { name: "certifications", value: selectedCertifications, type: "string[]" },
     { name: "details", value: details, type: "string" },
     { name: "previousAttestationId", value: previousAttestationId, type: "bytes32" },
   ]);
@@ -105,11 +162,26 @@ export async function registerMultipleAttestations(count: number) {
     const attestationDetails: AttestationDetails[] = [];
 
     for (let i = 0; i < count; i++) {
-      const batchId = `BATCH-D-${i + 1}`;
+      const batchId = generateBatchId();
       let previousAttestationId = ethers.ZeroHash;
+      const originCountry = getRandomElement(countries.production);
+      const originCity = getRandomCity(originCountry);
+      const destinationCountry = getRandomElement(countries.import);
+      const destinationCity = getRandomCity(destinationCountry);
 
       for (let stage = 0; stage < 6; stage++) {
-        const uid = await createAttestation(eas, schemaEncoder, batchId, stage, previousAttestationId, signer.address);
+        const uid = await createAttestation(
+          eas,
+          schemaEncoder,
+          batchId,
+          stage,
+          previousAttestationId,
+          signer.address,
+          originCountry,
+          originCity,
+          destinationCountry,
+          destinationCity,
+        );
         const details = await getAttestationDetails(eas, uid);
         attestationDetails.push(details);
         previousAttestationId = uid;

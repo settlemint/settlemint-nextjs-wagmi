@@ -204,9 +204,9 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
             {paginatedAttestations.map((attestation, index) => (
               <motion.tr
                 key={attestation.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                transition={{ duration: 0.1, delay: index * 0.02 }}
                 className="hover:bg-[#3A3A3A] transition-colors duration-150 cursor-pointer"
                 onClick={() => handleRowClick(attestation.id)}
               >

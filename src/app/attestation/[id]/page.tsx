@@ -1,13 +1,18 @@
 "use client"
 
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { geocode } from 'nominatim-browser';
 import { useEffect, useState } from 'react';
 import { fetchAttestationById } from '../../../api/attestations';
 import { NavBar } from '../../../components/NavBar';
 import type { Attestation } from '../../../types/attestation';
+
+// Dynamically import the Map component to avoid SSR issues
+const MapComponent = dynamic(() => import('../../../components/Map'), { ssr: false });
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -23,7 +28,7 @@ const StageDisplay: React.FC<{ stage: number }> = ({ stage }) => {
   const stageName = stageNames[stage] || String(stage);
   const icon = stageIcons[stage] || "❓";
   const color = stageColors[stage] || "bg-[#4A4A4A]";
-  
+
   return (
     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${color} text-white`}>
       {icon} {stageName}
@@ -35,6 +40,7 @@ export default function AttestationDetailPage() {
   const { id } = useParams();
   const [attestation, setAttestation] = useState<Attestation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     const loadAttestation = async () => {
@@ -43,6 +49,17 @@ export default function AttestationDetailPage() {
         const fetchedAttestation = await fetchAttestationById(id);
         setAttestation(fetchedAttestation);
         setIsLoading(false);
+
+        // Geocode the location
+        try {
+          const results = await geocode({ q: fetchedAttestation?.decodedData.location  });
+          console.log(fetchedAttestation?.decodedData.location, results)
+          if (results.length > 0) {
+            setCoordinates([Number.parseFloat(results[0].lat), Number.parseFloat(results[0].lon)]);
+          }
+        } catch (error) {
+          console.error('Error geocoding location:', error);
+        }
       }
     };
 
@@ -125,8 +142,16 @@ export default function AttestationDetailPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-[#333333] p-6 rounded-lg">
-              <h3 className="text-xl font-medium text-[#D4A574] mb-2 font-poppins">Location</h3>
-              <p className="text-lg text-[#F5F5F5]">{attestation.decodedData.location}</p>
+              <h3 className="text-xl font-medium text-[#D4A574] mb-2 font-poppins">{attestation.decodedData.location}</h3>
+              {coordinates ? (
+                <div className="h-[200px] rounded-lg overflow-hidden">
+                  <MapComponent center={coordinates} />
+                </div>
+              ) : (
+                <div className="h-[200px] rounded-lg overflow-hidden flex items-center justify-center bg-[#4A4A4A]">
+                  <p className="text-[#D4A574]">Map data unavailable</p>
+                </div>
+              )}
             </div>
             <div className="bg-[#333333] p-6 rounded-lg">
               <h3 className="text-xl font-medium text-[#D4A574] mb-2 font-poppins">Timestamp</h3>

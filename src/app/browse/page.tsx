@@ -7,6 +7,7 @@ import { fetchAttestations } from "../../api/attestations";
 import { AttestationModal } from "../../components/AttestationModal"; // Change this import
 import { AttestationsTable } from "../../components/AttestationsTable";
 import { CreateAttestationButton } from "../../components/CreateAttestationButton";
+import { Footer } from "../../components/Footer";
 import { NavBar } from "../../components/NavBar";
 import type { Attestation, DecodedData } from "../../types/attestation";
 
@@ -55,8 +56,8 @@ export default function BrowsePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2A2A2A] font-sans text-[#F5F5F5]">
-      <NavBar />
-      <main className="flex-grow container mx-auto my-12 px-4">
+      <NavBar isMainPage={false} />
+      <main className="flex-grow container mx-auto px-4 pt-8 pb-12"> {/* Updated padding top */}
         <motion.div {...fadeIn}>
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-4xl font-bold text-[#D4A574] font-poppins">Browse Coffee Journeys</h1>
@@ -93,12 +94,7 @@ export default function BrowsePage() {
         </div>
       )}
 
-      <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-8 mt-auto">
-        <div className="container mx-auto text-center">
-          <p className="text-lg">&copy; 2024 Coffee Batch Tracker. All rights reserved.</p>
-          <p className="mt-2 text-sm opacity-75">Ensuring transparency and sustainability in every cup.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import 'leaflet/dist/leaflet.css';
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import QueryProvider from "../providers/query";

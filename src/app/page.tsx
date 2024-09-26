@@ -1,13 +1,14 @@
 "use client"
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { fetchAttestations, fetchTotalAttestations } from "../api/attestations";
 import { AttestationModal } from "../components/AttestationModal";
 import { AttestationsTable } from "../components/AttestationsTable";
 import { CreateAttestationButton } from "../components/CreateAttestationButton";
+import { Footer } from "../components/Footer";
 import { NavBar } from "../components/NavBar";
 import type { Attestation } from "../types/attestation";
 
@@ -49,11 +50,37 @@ export default function Home() {
     setIsModalOpen(false);
   };
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.75; // Slowed down from 0.75 to 0.5
+    }
+  }, []);
+
+  const { scrollY } = useScroll();
+  const springConfig = { stiffness: 300, damping: 30, restDelta: 0.001 };
+  const y = useSpring(
+    useTransform(scrollY, [0, 300], [50, -50]),  // Changed to start at 50px down and move up to -50px
+    springConfig
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2A2A2A] font-sans text-[#F5F5F5]">
-      <NavBar />
+      <NavBar isMainPage={true} />
 
-      <div className="relative bg-cover bg-center h-[70vh]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1414808549009-35951c724e9f?q=80&w=2370&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}>
+      <div className="relative h-[78vh] overflow-hidden">
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-0 left-0 w-full h-full object-cover"
+        >
+          <source src="/cooling-roasted-coffee.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-transparent opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] to-transparent" />
         <div className="container mx-auto flex flex-col justify-center h-full relative z-10 p-6">
@@ -76,8 +103,15 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="flex-grow container mx-auto my-12 px-4">
-        <motion.section {...fadeIn} className="mb-16 bg-[#2A2A2A] p-8 rounded-lg shadow-2xl">
+      <main className="flex-grow container mx-auto px-4 relative z-10">
+        <motion.section
+          {...fadeIn}
+          style={{ y }}
+          className="mb-5 bg-[#2A2A2A] p-8 rounded-lg shadow-2xl relative mt-5"
+          initial={{ opacity: 0, y: 100 }}  // Start 100px lower
+          animate={{ opacity: 1, y: 50 }}   // Animate to 50px down
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <h2 className="text-4xl font-bold text-[#D4A574] mb-6 font-poppins">Coffee Journey Tracking</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
@@ -132,7 +166,7 @@ export default function Home() {
           </div>
         </motion.section>
 
-        <motion.div {...fadeIn}>
+        <motion.div {...fadeIn} className="mb-16"> {/* Added mb-16 for margin at the bottom */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-[#D4A574] font-poppins">
               Recent Coffee Journeys
@@ -161,12 +195,7 @@ export default function Home() {
         mode="create"
       />
 
-      <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-8 mt-auto">
-        <div className="container mx-auto text-center">
-          <p className="text-lg">&copy; 2024 Coffee Batch Tracker. All rights reserved.</p>
-          <p className="mt-2 text-sm opacity-75">Ensuring transparency and sustainability in every cup.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

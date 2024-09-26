@@ -11,16 +11,22 @@ WORKDIR /app
 COPY package.json bun.lockb* ./
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --production
 
 # Copy the rest of your app's source code
 COPY . .
 
+# Create a writable directory for Next.js image cache
+RUN mkdir -p /app/.next/cache/images && chmod 777 /app/.next/cache/images
+
 # Build your Next.js app
 RUN bun run build
-
 # Expose the port your app runs on
 EXPOSE 3000
+
+# Set environment variable to use the writable cache directory
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_SHARP_PATH /app/node_modules/sharp
 
 # Start the app
 CMD ["bun", "start"]
