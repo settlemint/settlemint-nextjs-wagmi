@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { motion } from "framer-motion";
 import { useRouter } from 'next/navigation';
 import type React from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface DecodedData {
   batchId: string;
@@ -123,7 +123,21 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSortDirection);
   const [itemsPerPage, setItemsPerPage] = useState(rowsPerPage);
 
-  const filteredAttestations = attestations.filter(attestation => {
+  // Filter out only the last attestation for each batch ID
+  const latestAttestations = useMemo(() => {
+    const batchMap = new Map<string, Attestation>();
+
+    attestations.forEach(attestation => {
+      const batchId = attestation.decodedData.batchId;
+      if (!batchMap.has(batchId) || attestation.decodedData.timestamp > batchMap.get(batchId)!.decodedData.timestamp) {
+        batchMap.set(batchId, attestation);
+      }
+    });
+
+    return Array.from(batchMap.values());
+  }, [attestations]);
+
+  const filteredAttestations = latestAttestations.filter(attestation => {
     if (!filterColumn || !filterValue) return true;
     const value = attestation.decodedData[filterColumn as keyof DecodedData];
     return String(value).toLowerCase().includes(filterValue.toLowerCase());

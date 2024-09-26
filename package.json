@@ -13,12 +13,13 @@
     "predev": "bun codegen",
     "prebuild": "bun codegen",
     "ci": "next build",
-    "docker": "docker buildx build --platform linux/amd64,linux/arm64 -t settlemint/settlemint-eas-coffee:main-9 --push .",
+    "docker": "docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t settlemint/settlemint-eas-coffee:main-9 --push .",
     "docker:run": "docker run -p 3000:3000 settlemint/settlemint-eas-coffee"
   },
   "dependencies": {
     "@ethereum-attestation-service/eas-sdk": "^2.6.0",
     "@tanstack/react-query": "5.51.24",
+    "@types/leaflet": "^1.9.12",
     "connectkit": "1.8.2",
     "encoding": "0.1.13",
     "ethers": "^6.13.2",

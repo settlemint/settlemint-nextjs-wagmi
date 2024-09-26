@@ -16,13 +16,16 @@ export function NavBar({ isMainPage = false }: NavBarProps) {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className={`flex items-center relative group ${pathname === '/' ? '' : 'hover:text-gray-300'}`}>
-            <Image
-              src="https://img.freepik.com/free-vector/three-coffee-beans-glyph_78370-1770.jpg?t=st=1727270626~exp=1727274226~hmac=dd1f7fecb7efd267d652efae32cf5d7a166c4214aea26a5ff7c272f581747db8&w=1380"
-              alt="Coffee Beans Logo"
-              width={35}
-              height={35}
-              className="rounded-full"
-            />
+            <div className="relative w-[35px] h-[35px]">
+              <div className="absolute inset-0 bg-white rounded-full"/>
+              <Image
+                src="/favicon.ico"
+                alt="Coffee Beans Logo"
+                width={25}
+                height={25}
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
+              />
+            </div>
             <span className="text-white text-base font-semibold ml-2">CBT</span>
             {pathname !== '/' && (
               <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 rounded-full blur-md transition-opacity duration-300 ease-in-out" />

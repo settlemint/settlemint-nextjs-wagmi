@@ -163,3 +163,21 @@ export const fetchTotalAttestations = async (): Promise<number> => {
     return 0;
   }
 };
+
+export const fetchAttestationsByBatchId = async (batchId: string): Promise<Attestation[]> => {
+  try {
+    const allAttestations = await fetchAttestations();
+
+    return allAttestations.filter((attestation) => {
+      const decodedData = attestation.decodedData;
+      return decodedData && decodedData.batchId === batchId;
+    });
+  } catch (error) {
+    console.error("Error fetching attestations by batch ID:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    return [];
+  }
+};
