@@ -87,6 +87,13 @@ const renderValue = (key: string, value: unknown): React.ReactNode => {
       </div>
     );
   }
+  if (key === 'batchId' && typeof value === 'string') {
+    return (
+      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs whitespace-nowrap">
+        {value}
+      </span>
+    );
+  }
   if (typeof value === 'object' && value !== null) {
     if ('hex' in value && typeof value.hex === 'string') {
       return value.hex;
@@ -194,7 +201,6 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
         <table className="w-full bg-[#2A2A2A] text-white">
           <thead>
             <tr className="bg-[#333333] text-white">
-              <th className="py-4 px-3 text-left whitespace-nowrap">ID</th>
               {columns.map((column) => (
                 <th key={column} className="py-4 px-3 text-left whitespace-nowrap">{getPrettyColumnName(column)}</th>
               ))}
@@ -210,11 +216,6 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
                 className="hover:bg-[#3A3A3A] transition-colors duration-150 cursor-pointer"
                 onClick={() => handleRowClick(attestation.id)}
               >
-                <td className="py-3 px-3 border-b border-[#444444] whitespace-nowrap">
-                  <div className="max-w-[100px] overflow-hidden overflow-ellipsis" title={attestation.id}>
-                    {`${attestation.id.slice(0, 8)}...${attestation.id.slice(-6)}`}
-                  </div>
-                </td>
                 {columns.map((column) => (
                   <td key={column} className="py-3 px-3 border-b border-[#444444] whitespace-nowrap">
                     <div className="max-w-[200px] overflow-hidden overflow-ellipsis" title={String(attestation.decodedData[column as keyof DecodedData])}>

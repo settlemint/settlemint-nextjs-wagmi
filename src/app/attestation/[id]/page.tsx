@@ -2,12 +2,11 @@
 
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { geocode } from 'nominatim-browser';
 import { useEffect, useState } from 'react';
-import { FaCalendarAlt, FaCertificate, FaClock } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock } from 'react-icons/fa';
 import { fetchAttestationById } from '../../../api/attestations';
 import { NavBar } from '../../../components/NavBar';
 import type { Attestation } from '../../../types/attestation';
@@ -67,7 +66,6 @@ const TimestampAndCertificationsDisplay: React.FC<{ timestamp: number, certifica
 
       <h3 className="text-xl font-medium text-[#D4A574] mb-4 font-poppins">Certifications</h3>
       <div className="flex items-start">
-        <FaCertificate className="text-[#D4A574] mr-3 mt-1" />
         <div className="flex flex-wrap gap-2">
           {certifications.map((cert) => (
             <span key={cert} className="bg-[#4A4A4A] text-[#D4A574] px-3 py-1 rounded-full text-sm font-semibold">
@@ -147,14 +145,14 @@ export default function AttestationDetailPage() {
       <NavBar />
       <main className="flex-grow container mx-auto px-4 py-8">
         <motion.div {...fadeIn} className="bg-[#2A2A2A] p-8 rounded-2xl shadow-2xl w-full max-w-4xl mx-auto">
-          <div className="mb-8 w-full aspect-[21/9] relative rounded-lg overflow-hidden shadow-lg">
+          {/* <div className="mb-8 w-full aspect-[21/9] relative rounded-lg overflow-hidden shadow-lg">
             <Image
               src="https://images.unsplash.com/photo-1524350876685-274059332603?q=80&w=2371&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Coffee Batch Image"
               layout="fill"
               objectFit="cover"
             />
-          </div>
+          </div> */}
 
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#D4A574] mb-4 font-poppins">{attestation.decodedData.batchId}</h1>
