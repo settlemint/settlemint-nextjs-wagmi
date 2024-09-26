@@ -20,7 +20,8 @@ const MapComponent: React.FC<MapProps> = ({ center }) => {
     <MapContainer
       center={center}
       zoom={4}
-      style={{ height: '100%', width: '100%' }}
+      style={{ height: '100%', width: '100%', color: 'black', accentColor: 'black' }}
+
       zoomControl={false} // This removes the zoom control buttons
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

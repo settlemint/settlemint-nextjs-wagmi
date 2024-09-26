@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { geocode } from 'nominatim-browser';
 import { useEffect, useState } from 'react';
+import { FaCalendarAlt, FaCertificate, FaClock } from 'react-icons/fa';
 import { fetchAttestationById } from '../../../api/attestations';
 import { NavBar } from '../../../components/NavBar';
 import type { Attestation } from '../../../types/attestation';
@@ -33,6 +34,49 @@ const StageDisplay: React.FC<{ stage: number }> = ({ stage }) => {
     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${color} text-white`}>
       {icon} {stageName}
     </span>
+  );
+};
+
+const TimestampAndCertificationsDisplay: React.FC<{ timestamp: number, certifications: string[] }> = ({ timestamp, certifications }) => {
+  const date = new Date(timestamp * 1000);
+  const formattedDate = date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const formattedTime = date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short',
+  });
+
+  return (
+    <div className="bg-[#333333] p-6 rounded-lg">
+      <h3 className="text-xl font-medium text-[#D4A574] mb-4 font-poppins">Timestamp</h3>
+      <div className="flex flex-col space-y-3 mb-6">
+        <div className="flex items-center">
+          <FaCalendarAlt className="text-[#D4A574] mr-3" />
+          <span className="text-lg text-[#F5F5F5]">{formattedDate}</span>
+        </div>
+        <div className="flex items-center">
+          <FaClock className="text-[#D4A574] mr-3" />
+          <span className="text-lg text-[#F5F5F5]">{formattedTime}</span>
+        </div>
+      </div>
+
+      <h3 className="text-xl font-medium text-[#D4A574] mb-4 font-poppins">Certifications</h3>
+      <div className="flex items-start">
+        <FaCertificate className="text-[#D4A574] mr-3 mt-1" />
+        <div className="flex flex-wrap gap-2">
+          {certifications.map((cert) => (
+            <span key={cert} className="bg-[#4A4A4A] text-[#D4A574] px-3 py-1 rounded-full text-sm font-semibold">
+              {cert}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -88,7 +132,7 @@ export default function AttestationDetailPage() {
             <Link href="/browse"
               className="px-6 py-3 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-all duration-300 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              Back to Browse
+              Back to Overview
             </Link>
           </motion.div>
         </main>
@@ -97,15 +141,6 @@ export default function AttestationDetailPage() {
   }
 
   const currentStage = attestation.decodedData.stage;
-  const formattedDate = new Date(attestation.decodedData.timestamp * 1000).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short'
-  });
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2C2C2C] font-sans text-[#F5F5F5]">
@@ -122,9 +157,8 @@ export default function AttestationDetailPage() {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-[#D4A574] mb-4 font-poppins">Coffee Journey</h1>
-            <h2 className="text-2xl font-semibold text-[#E6BE8A] mb-2 font-poppins">Batch ID: {attestation.decodedData.batchId}</h2>
-            <p className="text-lg text-[#F5F5F5] mb-4">Current Stage: <StageDisplay stage={currentStage} /></p>
+            <h1 className="text-4xl font-bold text-[#D4A574] mb-4 font-poppins">{attestation.decodedData.batchId}</h1>
+            <p className="text-lg text-[#F5F5F5] mb-4"><StageDisplay stage={currentStage} /></p>
             <div className="w-full bg-[#444444] rounded-full h-2.5 mb-4">
               <div
                 className="bg-[#D4A574] h-2.5 rounded-full transition-all duration-500 ease-out"
@@ -153,26 +187,23 @@ export default function AttestationDetailPage() {
                 </div>
               )}
             </div>
-            <div className="bg-[#333333] p-6 rounded-lg">
-              <h3 className="text-xl font-medium text-[#D4A574] mb-2 font-poppins">Timestamp</h3>
-              <p className="text-lg text-[#F5F5F5]">{formattedDate}</p>
-            </div>
+            <TimestampAndCertificationsDisplay
+              timestamp={attestation.decodedData.timestamp}
+              certifications={attestation.decodedData.certifications}
+            />
           </div>
 
           <div className="mt-6 bg-[#333333] p-6 rounded-lg">
-            <h3 className="text-xl font-medium text-[#D4A574] mb-4 font-poppins">Certifications</h3>
-            <div className="flex flex-wrap gap-2 mb-6">
-              {attestation.decodedData.certifications.map((cert) => (
-                <span key={cert} className="bg-[#4A4A4A] text-[#D4A574] px-3 py-1 rounded-full text-sm font-semibold">
-                  {cert}
-                </span>
-              ))}
+            <h3 className="text-xl font-medium text-[#D4A574] mb-4 font-poppins">Details</h3>
+            <div className="bg-[#2A2A2A] p-4 rounded-lg border border-[#4A4A4A] shadow-inner">
+              <div className="max-h-60 overflow-y-auto pr-4">
+                <p className="text-lg text-[#F5F5F5] whitespace-pre-line font-sans">
+                  {attestation.decodedData.details}
+                </p>
+              </div>
             </div>
 
-            <h3 className="text-xl font-medium text-[#D4A574] mb-2 font-poppins">Details</h3>
-            <p className="text-lg text-[#F5F5F5] whitespace-pre-wrap mb-6">{attestation.decodedData.details}</p>
-
-            <h3 className="text-xl font-medium text-[#D4A574] mb-2 font-poppins">Attester</h3>
+            <h3 className="text-xl font-medium text-[#D4A574] mt-6 mb-2 font-poppins">Attester</h3>
             <div className="group relative inline-block">
               <a
                 href={`${process.env.NEXT_PUBLIC_BLOCKCHAIN_EXPLORER_URL}/address/${attestation.decodedData.attester}`}
@@ -207,7 +238,7 @@ export default function AttestationDetailPage() {
             <Link href="/browse"
               className="px-8 py-4 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-all duration-300 text-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              Back to Browse
+              Back to Overview
             </Link>
           </div>
         </motion.div>

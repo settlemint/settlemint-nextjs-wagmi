@@ -78,6 +78,45 @@ async function initializeEAS() {
   return { eas, signer };
 }
 
+function generateDetails(stage: number, batchId: string, location: string, certifications: string[]): string {
+  const stageDetails = {
+    0: [
+      `Arabica beans harvested from ${location} at optimal ripeness. Altitude: 1,500m. Soil pH: 6.2. Shade-grown under native trees.`,
+      `Single-origin Robusta cultivated in ${location}. Recent rainfall: 120mm. Organic pest control methods employed.`,
+      `Mixed varietals from small-scale farmers in ${location}. Community-supported agriculture initiative. Average farm size: 2 hectares.`,
+    ],
+    1: [
+      `Wet processing method used for batch ${batchId} in ${location}. Fermentation time: 36 hours. Water consumption: 20L per kg of cherries.`,
+      "Honey process applied to enhance sweetness. Mucilage partially removed. Drying time: 15 days on raised beds.",
+      "Natural process: cherries sun-dried for 21 days. Constant monitoring for moisture levels and potential defects",
+    ],
+    2: [
+      `Batch ${batchId} prepared for export from ${location}. Moisture content: 10.5%. Packaged in GrainPro bags for optimal freshness.`,
+      "Pre-shipment samples sent to importers. Cupping score: 86.5. Notes of caramel, citrus, and blackberry detected.",
+      `Export documentation completed for ${batchId}. Fair Trade premium: $0.20/lb. Container loaded with 275 bags (69kg each).`,
+    ],
+    3: [
+      `Batch ${batchId} cleared customs in ${location}. Quality control check performed: no signs of mold or insect damage.`,
+      `Samples from ${batchId} roasted and cupped upon arrival. Flavor profile matches pre-shipment samples. Stored in climate-controlled warehouse.`,
+      `Import duties paid. Traceability information verified. Batch ${batchId} ready for distribution to local roasters.`,
+    ],
+    4: [
+      `Roasted ${batchId} to medium profile. First crack at 196°C, total roast time 11 minutes. Cooled and degassed for 24 hours.`,
+      "Light roast applied to preserve origin characteristics. Roast color: Agtron 60. Batch size: 25kg.",
+      "Espresso roast developed for batch ${batchId}. Second crack reached. Post-roast blend of 80% ${location} beans with 20% Brazilian for balance.",
+    ],
+    5: [
+      `Batch ${batchId} now available in our ${location} flagship store. Promotional campaign: "Journey to ${location}" featuring farmer stories.`,
+      `Online sales launched for batch ${batchId}. Limited edition packaging highlighting ${certifications.join(", ")}.`,
+      `${batchId} featured in our seasonal subscription box. Paired with locally-made chocolate for gift sets.`,
+    ],
+  };
+
+  const selectedDetail = stageDetails[stage as keyof typeof stageDetails][Math.floor(Math.random() * 3)];
+  const certificationInfo = certifications.length > 0 ? ` Certifications: ${certifications.join(", ")}.` : "";
+  return selectedDetail + certificationInfo;
+}
+
 async function createAttestation(
   eas: EAS,
   schemaEncoder: SchemaEncoder,
@@ -103,7 +142,7 @@ async function createAttestation(
 
   const certifications = ["Organic", "Fair Trade", "Rainforest Alliance", "UTZ Certified", "Bird Friendly"];
   const selectedCertifications = certifications.slice(0, Math.floor(Math.random() * 4) + 1);
-  const details = `Details for ${stages[stage]} stage of batch ${batchId} in ${location}`;
+  const details = generateDetails(stage, batchId, location, selectedCertifications);
 
   const encodedData = schemaEncoder.encodeData([
     { name: "batchId", value: batchId, type: "string" },
