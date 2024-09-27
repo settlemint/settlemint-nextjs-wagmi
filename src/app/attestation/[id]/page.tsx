@@ -3,10 +3,11 @@
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { geocode } from 'nominatim-browser';
 import { useEffect, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaClock } from 'react-icons/fa';
+import { Chrono } from "react-chrono";
+import { FaCalendarAlt, FaCertificate, FaClock, FaHashtag, FaInfoCircle, FaMapMarkerAlt, FaUser } from 'react-icons/fa';
 import { fetchAttestationById, fetchAttestationsByBatchId } from '../../../api/attestations';
 import { NavBar } from '../../../components/NavBar';
 import type { Attestation } from '../../../types/attestation';
@@ -29,92 +30,99 @@ interface StageAttestation {
   stage: number;
 }
 
-const StageDisplay: React.FC<{
+const TimelineDisplay: React.FC<{
   currentStage: number;
   batchStages: StageAttestation[];
-}> = ({ currentStage, batchStages }) => {
-  const router = useRouter();
+  attestations: Attestation[];
+}> = ({ currentStage, batchStages, attestations }) => {
+  const items = batchStages.map((stage, index) => {
+    return {
+      title: "",
+    };
+  });
 
-  const navigateToStage = (attestationId: string): void => {
-    router.push(`/attestation/${attestationId}`);
-  };
+  const customContent = batchStages.map((stage, index) => {
+    const attestation = attestations.find(a => a.decodedData.stage === stage.stage);
+    if (!attestation) return <div>No data available</div>;
 
-  const previousStage = (): void => {
-    const prevStage = batchStages.find(s => s.stage === currentStage - 1);
-    if (prevStage) {
-      navigateToStage(prevStage.id);
-    }
-  };
+    const date = new Date(attestation.decodedData.timestamp * 1000);
+    const formattedDate = date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const formattedTime = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
-  const nextStage = (): void => {
-    const nextStage = batchStages.find(s => s.stage === currentStage + 1);
-    if (nextStage) {
-      navigateToStage(nextStage.id);
-    }
-  };
-
-  return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-lg text-[#F5F5F5]">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${stageColors[currentStage]} text-white`}>
-            {stageIcons[currentStage]} {stageNames[currentStage]}
-          </span>
-        </p>
-        <div className="flex items-center">
-          <button
-            type="button"
-            onClick={previousStage}
-            className={`cursor-pointer ${currentStage > 0 ? 'text-[#D4A574]' : 'text-[#A0A0A0] cursor-default'}`}
-            disabled={currentStage === 0}
-          >
-            <FaArrowLeft />
-          </button>
-          <button
-            type="button"
-            onClick={nextStage}
-            className={`cursor-pointer ml-2 ${currentStage < stageNames.length - 1 ? 'text-[#D4A574]' : 'text-[#A0A0A0] cursor-default'}`}
-            disabled={currentStage === stageNames.length - 1}
-          >
-            <FaArrowRight />
-          </button>
+    return (
+      <div key={stage.id} className="bg-[#F5F5F5] p-4 rounded-lg shadow-md">
+        <h3 className="text-[#4A3728] font-semibold text-lg mb-2">
+          {stageNames[stage.stage]}
+        </h3>
+        <div className="space-y-2 text-sm text-[#333333]">
+          <div className="flex items-center">
+            <FaCalendarAlt className="text-[#8B4513] mr-2" />
+            <span>{formattedDate}</span>
+          </div>
+          <div className="flex items-center">
+            <FaClock className="text-[#8B4513] mr-2" />
+            <span>{formattedTime}</span>
+          </div>
+          <div className="flex items-center">
+            <FaMapMarkerAlt className="text-[#8B4513] mr-2" />
+            <span>{attestation.decodedData.location}</span>
+          </div>
+          <div className="flex items-center">
+            <FaCertificate className="text-[#8B4513] mr-2" />
+            <span>{attestation.decodedData.certifications.join(", ")}</span>
+          </div>
+          <div className="flex items-start">
+            <FaInfoCircle className="text-[#8B4513] mr-2 mt-1" />
+            <span className="flex-1">{attestation.decodedData.details}</span>
+          </div>
+          <div className="flex items-center">
+            <FaUser className="text-[#8B4513] mr-2" />
+            <span className="truncate" title={attestation.decodedData.attester}>
+              {attestation.decodedData.attester.slice(0, 10)}...
+            </span>
+          </div>
+          <div className="flex items-center">
+            <FaHashtag className="text-[#8B4513] mr-2" />
+            <span className="truncate" title={attestation.txid}>
+              {attestation.txid}...
+            </span>
+          </div>
         </div>
       </div>
-      <div className="w-full bg-[#444444] rounded-full h-2.5 mb-4">
-        <div
-          className="bg-[#D4A574] h-2.5 rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${((currentStage + 1) / stageNames.length) * 100}%` }}
-        />
-      </div>
-      <div className="flex justify-between text-sm text-[#A0A0A0]">
-        {stageNames.map((stage, index) => {
-          const stageAttestation = batchStages.find(s => s.stage === index);
-          const isCurrentOrPastStage = index <= currentStage;
-          const textColor = isCurrentOrPastStage ? '#D4A574' : '#A0A0A0';
-          const dotColor = isCurrentOrPastStage ? '#D4A574' : '#A0A0A0';
+    );
+  });
 
-          return (
-            <div key={stage} className="flex flex-col items-center group">
-              <button
-                type="button"
-                onClick={() => stageAttestation && navigateToStage(stageAttestation.id)}
-                className={`cursor-pointer transition-all duration-200 ${stageAttestation ? 'group-hover:scale-110' : 'cursor-default'}`}
-                style={{ color: textColor }}
-                disabled={!stageAttestation}
-              >
-                {stage}
-              </button>
-              {stageAttestation && (
-                <div
-                  className="mt-1 w-2 h-2 rounded-full transition-all duration-200 group-hover:scale-125"
-                  style={{ backgroundColor: dotColor }}
-                  title={`View ${stage} attestation`}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
+  return (
+    <div className="h-[1200px] w-full">
+      <Chrono
+        items={items}
+        mode="VERTICAL_ALTERNATING"
+        theme={{
+          primary: "#D4A574",
+          secondary: "#8B4513",
+          cardBgColor: "#F5F5F5",
+          cardForeColor: "#333333",
+          titleColor: "#8B4513",
+          titleColorActive: "#D4A574",
+        }}
+        activeItemIndex={currentStage}
+        cardHeight={350}
+        flipLayout
+        useReadMore={false}
+        disableToolbar
+        borderLessCards
+        scrollable={false}
+        hideControls
+      >
+        {customContent}
+      </Chrono>
     </div>
   );
 };
@@ -165,8 +173,9 @@ export default function AttestationDetailPage(): JSX.Element {
   const { id } = useParams();
   const [attestation, setAttestation] = useState<Attestation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
+  const [coordinates, setCoordinates] = useState<[number, number][]>([]);
   const [batchStages, setBatchStages] = useState<StageAttestation[]>([]);
+  const [allAttestations, setAllAttestations] = useState<Attestation[]>([]);
 
   useEffect(() => {
     const loadAttestation = async (): Promise<void> => {
@@ -178,16 +187,28 @@ export default function AttestationDetailPage(): JSX.Element {
 
           if (fetchedAttestation) {
             const fetchedStages = await fetchAttestationsByBatchId(fetchedAttestation.decodedData.batchId);
+            setAllAttestations(fetchedStages);
             const stages = fetchedStages.map(attestation => ({
               id: attestation.id,
               stage: attestation.decodedData.stage
             }));
             setBatchStages(stages);
 
-            const results = await geocode({ q: fetchedAttestation.decodedData.location });
-            if (results.length > 0) {
-              setCoordinates([Number(results[0].lat), Number(results[0].lon)]);
-            }
+            // Filter stages up to and including the current stage
+            const currentStage = fetchedAttestation.decodedData.stage;
+            const relevantStages = fetchedStages.filter(stage => stage.decodedData.stage <= currentStage);
+
+            const batchCoordinates = relevantStages.map(async (attestation) => {
+              const results = await geocode({ q: attestation.decodedData.location });
+              if (results.length > 0) {
+                return [Number(results[0].lat), Number(results[0].lon)];
+              }
+              return null;
+            });
+
+            const resolvedCoordinates = await Promise.all(batchCoordinates);
+            const filteredCoordinates = resolvedCoordinates.filter((coord): coord is [number, number] => coord !== null);
+            setCoordinates(filteredCoordinates);
           }
         } catch (error) {
           console.error('Error loading attestation:', error);
@@ -236,83 +257,39 @@ export default function AttestationDetailPage(): JSX.Element {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2C2C2C] font-sans text-[#F5F5F5]">
       <NavBar />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <motion.div {...fadeIn} className="bg-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-4xl mx-auto overflow-hidden">
-          <div className="p-6 border-b border-[#444444]">
-            <h1 className="text-2xl font-semibold text-[#F5F5F5] mb-2 font-poppins">Batch Details</h1>
-            <p className="text-lg text-[#D4A574] font-semibold">
-              {attestation.decodedData.batchId}
-            </p>
+        <motion.div {...fadeIn} className="bg-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto overflow-hidden">
+          {/* Map component */}
+          <div className="relative">
+            {coordinates.length > 0 ? (
+              <div className="h-[300px] w-full">
+                <MapComponent coordinates={coordinates} />
+              </div>
+            ) : (
+              <div className="h-[300px] w-full flex items-center justify-center bg-[#4A4A4A]">
+                <p className="text-[#D4A574]">Map data unavailable</p>
+              </div>
+            )}
           </div>
 
-          <div className="p-8">
-            <StageDisplay
+          {/* Content area below the map */}
+          <div className="p-8 relative">
+            {/* Batch ID pill */}
+            <div className="mb-8 flex justify-center">
+              <div className="bg-[#D4A574] text-[#1A1A1A] py-2 px-6 rounded-full shadow-lg">
+                <h2 className="text-xl font-bold">{attestation.decodedData.batchId}</h2>
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <TimelineDisplay
               currentStage={attestation.decodedData.stage}
               batchStages={batchStages}
+              attestations={allAttestations}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-[#333333] p-6 rounded-lg">
-                <h3 className="text-xl font-medium text-[#D4A574] mb-2 font-poppins">{attestation.decodedData.location}</h3>
-                {coordinates ? (
-                  <div className="h-[200px] rounded-lg overflow-hidden">
-                    <MapComponent center={coordinates} />
-                  </div>
-                ) : (
-                  <div className="h-[200px] rounded-lg overflow-hidden flex items-center justify-center bg-[#4A4A4A]">
-                    <p className="text-[#D4A574]">Map data unavailable</p>
-                  </div>
-                )}
-              </div>
-              <TimestampAndCertificationsDisplay
-                timestamp={attestation.decodedData.timestamp}
-                certifications={attestation.decodedData.certifications}
-              />
-            </div>
-
-            <div className="mt-6 bg-[#333333] p-6 rounded-lg">
-              <h3 className="text-xl font-medium text-[#D4A574] mb-4 font-poppins">Details</h3>
-              <div className="bg-[#2A2A2A] p-4 rounded-lg border border-[#4A4A4A] shadow-inner">
-                <div className="max-h-60 overflow-y-auto pr-4">
-                  <p className="text-lg text-[#F5F5F5] whitespace-pre-line font-sans">
-                    {attestation.decodedData.details}
-                  </p>
-                </div>
-              </div>
-
-              <h3 className="text-xl font-medium text-[#D4A574] mt-6 mb-2 font-poppins">Attester</h3>
-              <div className="group relative inline-block">
-                <a
-                  href={`${process.env.NEXT_PUBLIC_BLOCKCHAIN_EXPLORER_URL}/address/${attestation.decodedData.attester}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-lg text-[#E6BE8A] hover:text-[#D4A574] transition-colors duration-200 break-all underline"
-                >
-                  {attestation.decodedData.attester}
-                </a>
-                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-[#333333] text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                  Click to view on block explorer
-                </span>
-              </div>
-
-              <h3 className="text-xl font-medium text-[#D4A574] mt-6 mb-2 font-poppins">Transaction</h3>
-              <div className="group relative inline-block">
-                <a
-                  href={`${process.env.NEXT_PUBLIC_BLOCKCHAIN_EXPLORER_URL}/tx/${attestation.txid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-lg text-[#E6BE8A] hover:text-[#D4A574] transition-colors duration-200 break-all underline"
-                >
-                  {attestation.txid}
-                </a>
-                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-[#333333] text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                  Click to view transaction on block explorer
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-12 flex justify-center">
+            <div className="mt-16 flex justify-center">
               <Link href="/browse"
-                className="px-8 py-4 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-all duration-300 text-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="px-12 py-6 bg-[#D4A574] text-[#1A1A1A] rounded-lg hover:bg-[#E6BE8A] transition-all duration-300 text-3xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 Back to Overview
               </Link>
@@ -320,10 +297,10 @@ export default function AttestationDetailPage(): JSX.Element {
           </div>
         </motion.div>
       </main>
-      <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-8 mt-auto">
+      <footer className="bg-[#1A1A1A] text-[#F5F5F5] py-12 mt-auto">
         <div className="container mx-auto text-center">
-          <p className="text-lg">&copy; 2024 Coffee Batch Tracker. All rights reserved.</p>
-          <p className="mt-2 text-sm opacity-75">Ensuring transparency and sustainability in every cup.</p>
+          <p className="text-2xl">&copy; 2024 Coffee Batch Tracker. All rights reserved.</p>
+          <p className="mt-4 text-lg opacity-75">Ensuring transparency and sustainability in every cup.</p>
         </div>
       </footer>
     </div>

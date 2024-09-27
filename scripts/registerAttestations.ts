@@ -25,28 +25,47 @@ interface AttestationDetails {
 }
 
 const countries = {
-  production: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia"],
-  processing: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia"],
-  export: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia"],
-  import: ["USA", "Germany", "Japan", "Italy", "Canada"],
-  roasting: ["USA", "Germany", "Japan", "Italy", "Canada"],
-  retail: ["USA", "Germany", "Japan", "Italy", "Canada", "UK", "France", "Australia"],
+  production: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia", "Kenya", "Costa Rica"],
+  processing: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia", "Kenya", "Costa Rica"],
+  export: ["Colombia", "Brazil", "Ethiopia", "Vietnam", "Indonesia", "Kenya", "Costa Rica"],
+  import: [
+    "USA",
+    "Germany",
+    "Japan",
+    "Italy",
+    "Canada",
+    "Netherlands",
+    "South Korea",
+    "UK",
+    "France",
+    "Australia",
+    "Spain",
+    "Sweden",
+  ],
+  roasting: ["USA", "Germany", "Japan", "Italy", "Canada", "UK", "France", "Australia", "Spain", "Sweden"],
+  retail: ["USA", "Germany", "Japan", "Italy", "Canada", "UK", "France", "Australia", "Spain", "Sweden"],
 };
 
 const cities = {
-  Colombia: ["Bogotá", "Medellín", "Cali"],
-  Brazil: ["São Paulo", "Rio de Janeiro", "Belo Horizonte"],
-  Ethiopia: ["Addis Ababa", "Dire Dawa", "Bahir Dar"],
-  Vietnam: ["Ho Chi Minh City", "Hanoi", "Da Nang"],
-  Indonesia: ["Jakarta", "Surabaya", "Bandung"],
-  USA: ["Seattle", "New York", "San Francisco"],
-  Germany: ["Berlin", "Hamburg", "Munich"],
-  Japan: ["Tokyo", "Osaka", "Kyoto"],
-  Italy: ["Rome", "Milan", "Florence"],
-  Canada: ["Toronto", "Vancouver", "Montreal"],
-  UK: ["London", "Manchester", "Edinburgh"],
-  France: ["Paris", "Lyon", "Marseille"],
-  Australia: ["Sydney", "Melbourne", "Brisbane"],
+  Colombia: ["Bogotá", "Medellín", "Cali", "Cartagena", "Barranquilla"],
+  Brazil: ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Salvador", "Brasília"],
+  Ethiopia: ["Addis Ababa", "Dire Dawa", "Bahir Dar", "Hawassa", "Mek'ele"],
+  Vietnam: ["Ho Chi Minh City", "Hanoi", "Da Nang", "Hoi An", "Nha Trang"],
+  Indonesia: ["Jakarta", "Surabaya", "Bandung", "Medan", "Semarang"],
+  Kenya: ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret"],
+  "Costa Rica": ["San José", "Liberia", "Alajuela", "Cartago", "Heredia"],
+  USA: ["Seattle", "New York", "San Francisco", "Los Angeles", "Chicago"],
+  Germany: ["Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt"],
+  Japan: ["Tokyo", "Osaka", "Kyoto", "Yokohama", "Nagoya"],
+  Italy: ["Rome", "Milan", "Florence", "Venice", "Naples"],
+  Canada: ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"],
+  Netherlands: ["Amsterdam", "Rotterdam", "The Hague", "Utrecht", "Eindhoven"],
+  "South Korea": ["Seoul", "Busan", "Incheon", "Daegu", "Daejeon"],
+  UK: ["London", "Manchester", "Birmingham", "Edinburgh", "Glasgow"],
+  France: ["Paris", "Lyon", "Marseille", "Bordeaux", "Strasbourg"],
+  Australia: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
+  Spain: ["Madrid", "Barcelona", "Valencia", "Seville", "Bilbao"],
+  Sweden: ["Stockholm", "Gothenburg", "Malmö", "Uppsala", "Västerås"],
 };
 
 const stages = ["Farm", "Processing", "Export", "Import", "Roasting", "Retail"];
@@ -73,7 +92,12 @@ function getRandomElement<T>(array: T[]): T {
 }
 
 function getRandomCity(country: string): string {
-  return getRandomElement(cities[country as keyof typeof cities] || []);
+  const cityList = cities[country as keyof typeof cities];
+  if (!cityList || cityList.length === 0) {
+    console.warn(`No cities found for country: ${country}. Using country name as city.`);
+    return country;
+  }
+  return getRandomElement(cityList);
 }
 
 async function initializeEAS(): Promise<{ eas: EAS; signer: ethers.Wallet }> {
@@ -187,6 +211,27 @@ function generateDetails(
   return selectedDetail + certificationInfo + harvestInfo + batchSizeInfo;
 }
 
+function getRandomCountryForStage(stage: number, currentCountry: string): string {
+  const stageType = stages[stage].toLowerCase();
+  let countryList: string[];
+
+  if (stageType === "farm" || stageType === "processing" || stageType === "export") {
+    countryList = countries.production;
+    // If the current country is a production country, keep it for these stages
+    if (countries.production.includes(currentCountry)) {
+      return currentCountry;
+    }
+  } else if (stageType === "import") {
+    countryList = countries.import;
+    // Ensure the import country is different from the export country
+    countryList = countryList.filter((country) => country !== currentCountry);
+  } else {
+    countryList = countries[stageType as keyof typeof countries] || countries.retail;
+  }
+
+  return getRandomElement(countryList);
+}
+
 async function createAttestation(
   eas: EAS,
   schemaEncoder: SchemaEncoder,
@@ -194,24 +239,14 @@ async function createAttestation(
   stage: number,
   previousAttestationId: string,
   attesterAddress: string,
-  originCountry: string,
-  originCity: string,
-  destinationCountry: string,
-  destinationCity: string,
+  currentCountry: string,
+  currentCity: string,
   batchSize: number,
   harvestDate: Date,
   currentDate: Date,
 ): Promise<string> {
   const timestamp = Math.floor(Date.now() / 1000);
-  let location: string;
-
-  if (stage <= 2) {
-    location = `${originCity}, ${originCountry}`;
-  } else if (stage >= 3) {
-    location = `${destinationCity}, ${destinationCountry}`;
-  } else {
-    location = stage === 2 ? `${originCity}, ${originCountry}` : `${destinationCity}, ${destinationCountry}`;
-  }
+  const location = `${currentCity}, ${currentCountry}`;
 
   const selectedCertifications = Object.keys(certifications).slice(0, Math.floor(Math.random() * 3) + 1);
   const details = generateDetails(
@@ -280,27 +315,15 @@ async function updateBatch(
     batchId: string;
     stage: number;
     previousAttestationId: string;
-    originCountry: string;
-    originCity: string;
-    destinationCountry: string;
-    destinationCity: string;
+    currentCountry: string;
+    currentCity: string;
     batchSize: number;
     harvestDate: Date;
     currentDate: Date;
   },
-): Promise<{ uid: string; stage: number }> {
-  const {
-    batchId,
-    stage,
-    previousAttestationId,
-    originCountry,
-    originCity,
-    destinationCountry,
-    destinationCity,
-    batchSize,
-    harvestDate,
-    currentDate,
-  } = batchInfo;
+): Promise<{ uid: string; stage: number; nextCountry: string; nextCity: string }> {
+  const { batchId, stage, previousAttestationId, currentCountry, currentCity, batchSize, harvestDate, currentDate } =
+    batchInfo;
 
   const uid = await createAttestation(
     eas,
@@ -309,21 +332,23 @@ async function updateBatch(
     stage,
     previousAttestationId,
     signer.address,
-    originCountry,
-    originCity,
-    destinationCountry,
-    destinationCity,
+    currentCountry,
+    currentCity,
     batchSize,
     harvestDate,
     currentDate,
   );
 
+  const nextCountry = getRandomCountryForStage(stage + 1, currentCountry);
+  const nextCity = getRandomCity(nextCountry);
+
   console.log(`Updated batch ${batchId} to stage ${stage + 1}`);
-  return { uid, stage: stage + 1 };
+  console.log(`Next location: ${nextCity}, ${nextCountry}`);
+  return { uid, stage: stage + 1, nextCountry, nextCity };
 }
 
 function getRandomInterval(stage: number): number {
-  const baseInterval = 30 * 1000; // 30 seconds in milliseconds
+  const baseInterval = 3 * 1000; // 30 seconds in milliseconds
   const additionalInterval = Math.floor(Math.random() * 60 * 1000); // 0-60 seconds in milliseconds
   const stageMultiplier = Math.min(stage + 1, 3); // Stages 0-2 have increasing intervals, 3-5 have max interval
   return baseInterval + additionalInterval / stageMultiplier;
@@ -337,30 +362,25 @@ async function simulateMultipleBatches(count: number, duration: number): Promise
     "string batchId, uint256 timestamp, address attester, uint8 stage, string location, string[] certifications, string details, bytes32 previousAttestationId",
   );
 
-  const batches = Array.from({ length: count }, () => ({
-    batchId: generateBatchId(),
-    stage: 0,
-    previousAttestationId: ethers.ZeroHash,
-    originCountry: getRandomElement(countries.production),
-    destinationCountry: getRandomElement(countries.import),
-    batchSize: getRandomBatchSize(),
-    harvestDate: new Date(),
-    currentDate: new Date(),
-    originCity: "",
-    destinationCity: "",
-  }));
+  const batches = Array.from({ length: count }, () => {
+    const originCountry = getRandomCountryForStage(0, "");
+    return {
+      batchId: generateBatchId(),
+      stage: 0,
+      previousAttestationId: ethers.ZeroHash,
+      currentCountry: originCountry,
+      currentCity: getRandomCity(originCountry),
+      batchSize: getRandomBatchSize(),
+      harvestDate: new Date(),
+      currentDate: new Date(),
+    };
+  });
 
   console.log(chalk.yellow.bold("\n📦 Initialized batches:"));
   for (const batch of batches) {
-    batch.originCity = getRandomCity(batch.originCountry);
-    batch.destinationCity = getRandomCity(batch.destinationCountry);
-    batch.harvestDate = getSeasonalHarvestDate(batch.originCountry);
+    batch.harvestDate = getSeasonalHarvestDate(batch.currentCountry);
     batch.currentDate = batch.harvestDate;
-    console.log(
-      chalk.yellow(
-        `   Batch ${batch.batchId}: ${batch.originCity}, ${batch.originCountry} → ${batch.destinationCity}, ${batch.destinationCountry}`,
-      ),
-    );
+    console.log(chalk.yellow(`   Batch ${batch.batchId}: Starting in ${batch.currentCity}, ${batch.currentCountry}`));
   }
 
   const startTime = Date.now();
@@ -376,16 +396,21 @@ async function simulateMultipleBatches(count: number, duration: number): Promise
     }
 
     console.log(
-      chalk.magenta(`\n🔨 Updating batch ${batchToUpdate.batchId} (current stage: ${stages[batchToUpdate.stage]})`),
+      chalk.magenta(
+        `\n🔨 Updating batch ${batchToUpdate.batchId} (current stage: ${stages[batchToUpdate.stage]} in ${batchToUpdate.currentCity}, ${batchToUpdate.currentCountry})`,
+      ),
     );
     try {
       const result = await updateBatch(eas, schemaEncoder, signer, batchToUpdate);
       batchToUpdate.previousAttestationId = result.uid;
       batchToUpdate.stage = result.stage;
+      batchToUpdate.currentCountry = result.nextCountry;
+      batchToUpdate.currentCity = result.nextCity;
       batchToUpdate.currentDate = addDays(batchToUpdate.currentDate, 7 + Math.floor(Math.random() * 14));
 
       console.log(chalk.green(`✅ Batch ${batchToUpdate.batchId} updated to stage: ${stages[batchToUpdate.stage]}`));
       console.log(chalk.cyan(`🆔 New attestation UID: ${result.uid}`));
+      console.log(chalk.yellow(`📍 New location: ${batchToUpdate.currentCity}, ${batchToUpdate.currentCountry}`));
 
       const details = await getAttestationDetails(eas, result.uid);
       attestationDetails.push(details);
