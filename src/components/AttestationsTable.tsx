@@ -76,8 +76,8 @@ const renderValue = (key: string, value: unknown): React.ReactNode => {
   if (key === 'certifications' && Array.isArray(value)) {
     return (
       <div className="flex items-center space-x-1">
-        {value.slice(0, 2).map((cert, index) => (
-          <span key={index} className="px-2 py-1 bg-[#4A4A4A] text-[#D4A574] rounded-full text-xs whitespace-nowrap">
+        {value.slice(0, 2).map((cert) => (
+          <span key={cert} className="px-2 py-1 bg-[#4A4A4A] text-[#D4A574] rounded-full text-xs whitespace-nowrap">
             {cert}
           </span>
         ))}
@@ -127,12 +127,13 @@ export const AttestationsTable: React.FC<AttestationsTableProps> = ({
   const latestAttestations = useMemo(() => {
     const batchMap = new Map<string, Attestation>();
 
-    attestations.forEach(attestation => {
+    for (const attestation of attestations) {
       const batchId = attestation.decodedData.batchId;
-      if (!batchMap.has(batchId) || attestation.decodedData.timestamp > batchMap.get(batchId)!.decodedData.timestamp) {
+      const existingAttestation = batchMap.get(batchId);
+      if (!existingAttestation || attestation.decodedData.timestamp > existingAttestation.decodedData.timestamp) {
         batchMap.set(batchId, attestation);
       }
-    });
+    }
 
     return Array.from(batchMap.values());
   }, [attestations]);

@@ -1,10 +1,10 @@
 import { useRouter } from 'next/navigation';
-import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { fetchAttestations } from '../api/attestations';
 import type { Attestation } from '../types/attestation';
 
-const stageNames = ['Farm', 'Processing', 'Export', 'Import', 'Roasting', 'Retail'];
+const STAGE_NAMES = ['Farm', 'Processing', 'Export', 'Import', 'Roasting', 'Retail'] as const;
+const DEBOUNCE_DELAY = 300;
 
 export function SearchBar() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,18 +31,24 @@ export function SearchBar() {
     const delayDebounceFn = setTimeout(async () => {
       if (searchTerm) {
         setIsLoading(true);
-        const allAttestations = await fetchAttestations();
-        const filteredAttestations = allAttestations.filter(
-          attestation => attestation.decodedData.batchId.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setResults(filteredAttestations);
-        setIsLoading(false);
-        setShowDropdown(true);
+        try {
+          const allAttestations = await fetchAttestations();
+          const filteredAttestations = allAttestations.filter(
+            attestation => attestation.decodedData.batchId.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setResults(filteredAttestations);
+          setShowDropdown(true);
+        } catch (error) {
+          console.error('Error fetching attestations:', error);
+          setResults([]);
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         setResults([]);
         setShowDropdown(false);
       }
-    }, 300);
+    }, DEBOUNCE_DELAY);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
@@ -81,8 +87,10 @@ export function SearchBar() {
                     handleAttestationClick(attestation.id);
                   }
                 }}
+                role="button"
+                tabIndex={0}
               >
-                {attestation.decodedData.batchId} - {stageNames[attestation.decodedData.stage]}
+                {attestation.decodedData.batchId} - {STAGE_NAMES[attestation.decodedData.stage]}
               </div>
             ))
           ) : (

@@ -35,7 +35,7 @@ export const fetchAttestations = async (): Promise<Attestation[]> => {
       schemaId: SCHEMA_ID,
     });
 
-    if (!data || !data.attestations || !Array.isArray(data.attestations)) {
+    if (!data?.attestations || !Array.isArray(data.attestations)) {
       console.error("Invalid API response structure:", data);
       return [];
     }
@@ -60,10 +60,6 @@ export const fetchAttestations = async (): Promise<Attestation[]> => {
       .filter((attestation): attestation is Attestation => attestation !== null);
   } catch (error) {
     console.error("Error fetching attestations:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
     return [];
   }
 };
@@ -77,7 +73,7 @@ export const createAttestation = async (
   attester: string,
   previousAttestationId: string,
   timestamp: number,
-) => {
+): Promise<string> => {
   const eas = new EAS(EAS_CONTRACT_ADDRESS);
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
@@ -111,17 +107,14 @@ export const createAttestation = async (
   const receipt = await tx.wait();
   console.log("Transaction receipt:", receipt);
 
-  const attestation = await eas.getAttestation(receipt);
-  console.log("Attestation details:", attestation);
-
-  return attestation;
+  return receipt;
 };
 
 export const fetchAttestationById = async (id: string): Promise<Attestation | null> => {
   try {
     const data = await graphqlClient.request<{ attestation: RawAttestation }>(ATTESTATION_BY_ID_QUERY, { id });
 
-    if (!data || !data.attestation || !data.attestation.decodedDataJson) {
+    if (!data?.attestation?.decodedDataJson) {
       console.error("Invalid API response structure or empty decodedDataJson:", data);
       return null;
     }
@@ -134,10 +127,6 @@ export const fetchAttestationById = async (id: string): Promise<Attestation | nu
     };
   } catch (error) {
     console.error("Error fetching attestation by ID:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
     return null;
   }
 };
@@ -148,7 +137,7 @@ export const fetchTotalAttestations = async (): Promise<number> => {
       schemaId: SCHEMA_ID,
     });
 
-    if (typeof data.attestations.length !== "number") {
+    if (!Array.isArray(data.attestations)) {
       console.error("Invalid API response structure for total attestations:", data);
       return 0;
     }
@@ -156,10 +145,6 @@ export const fetchTotalAttestations = async (): Promise<number> => {
     return data.attestations.length;
   } catch (error) {
     console.error("Error fetching total attestations:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
     return 0;
   }
 };
@@ -167,17 +152,9 @@ export const fetchTotalAttestations = async (): Promise<number> => {
 export const fetchAttestationsByBatchId = async (batchId: string): Promise<Attestation[]> => {
   try {
     const allAttestations = await fetchAttestations();
-
-    return allAttestations.filter((attestation) => {
-      const decodedData = attestation.decodedData;
-      return decodedData && decodedData.batchId === batchId;
-    });
+    return allAttestations.filter((attestation) => attestation.decodedData?.batchId === batchId);
   } catch (error) {
     console.error("Error fetching attestations by batch ID:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
     return [];
   }
 };

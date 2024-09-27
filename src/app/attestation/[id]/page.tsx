@@ -30,23 +30,23 @@ interface StageAttestation {
 }
 
 const StageDisplay: React.FC<{
-  currentStage: number,
-  batchStages: StageAttestation[]
+  currentStage: number;
+  batchStages: StageAttestation[];
 }> = ({ currentStage, batchStages }) => {
   const router = useRouter();
 
-  const navigateToStage = (attestationId: string) => {
+  const navigateToStage = (attestationId: string): void => {
     router.push(`/attestation/${attestationId}`);
   };
 
-  const previousStage = () => {
+  const previousStage = (): void => {
     const prevStage = batchStages.find(s => s.stage === currentStage - 1);
     if (prevStage) {
       navigateToStage(prevStage.id);
     }
   };
 
-  const nextStage = () => {
+  const nextStage = (): void => {
     const nextStage = batchStages.find(s => s.stage === currentStage + 1);
     if (nextStage) {
       navigateToStage(nextStage.id);
@@ -161,7 +161,7 @@ const TimestampAndCertificationsDisplay: React.FC<{ timestamp: number, certifica
   );
 };
 
-export default function AttestationDetailPage() {
+export default function AttestationDetailPage(): JSX.Element {
   const { id } = useParams();
   const [attestation, setAttestation] = useState<Attestation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -169,34 +169,31 @@ export default function AttestationDetailPage() {
   const [batchStages, setBatchStages] = useState<StageAttestation[]>([]);
 
   useEffect(() => {
-    const loadAttestation = async () => {
+    const loadAttestation = async (): Promise<void> => {
       if (id && typeof id === 'string') {
         setIsLoading(true);
-        const fetchedAttestation = await fetchAttestationById(id);
-        setAttestation(fetchedAttestation);
+        try {
+          const fetchedAttestation = await fetchAttestationById(id);
+          setAttestation(fetchedAttestation);
 
-        if (fetchedAttestation) {
-          // Fetch all stages for this batch ID
-          const fetchedStages = await fetchAttestationsByBatchId(fetchedAttestation.decodedData.batchId);
-          const stages = fetchedStages.map(attestation => ({
-            id: attestation.id,
-            stage: attestation.decodedData.stage
-          }));
-          setBatchStages(stages);
+          if (fetchedAttestation) {
+            const fetchedStages = await fetchAttestationsByBatchId(fetchedAttestation.decodedData.batchId);
+            const stages = fetchedStages.map(attestation => ({
+              id: attestation.id,
+              stage: attestation.decodedData.stage
+            }));
+            setBatchStages(stages);
 
-          // Geocode the location
-          try {
             const results = await geocode({ q: fetchedAttestation.decodedData.location });
-            console.log(fetchedAttestation.decodedData.location, results);
             if (results.length > 0) {
-              setCoordinates([Number.parseFloat(results[0].lat), Number.parseFloat(results[0].lon)]);
+              setCoordinates([Number(results[0].lat), Number(results[0].lon)]);
             }
-          } catch (error) {
-            console.error('Error geocoding location:', error);
           }
+        } catch (error) {
+          console.error('Error loading attestation:', error);
+        } finally {
+          setIsLoading(false);
         }
-
-        setIsLoading(false);
       }
     };
 

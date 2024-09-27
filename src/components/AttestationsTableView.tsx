@@ -11,11 +11,15 @@ export function AttestationsTableView() {
 
   useEffect(() => {
     const loadAttestations = async () => {
-      const fetchedAttestations = await fetchAttestations();
-      setAttestations(fetchedAttestations);
+      try {
+        const fetchedAttestations = await fetchAttestations();
+        setAttestations(fetchedAttestations);
 
-      if (fetchedAttestations.length > 0) {
-        setColumns(Object.keys(fetchedAttestations[0].decodedData));
+        if (fetchedAttestations.length > 0) {
+          setColumns(Object.keys(fetchedAttestations[0].decodedData));
+        }
+      } catch (error) {
+        console.error("Failed to load attestations:", error);
       }
     };
 

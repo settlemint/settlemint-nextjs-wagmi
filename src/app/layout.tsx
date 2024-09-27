@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 const poppins = Poppins({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Coffee Bean Tracker",
+  title: "Coffee Beans Tracker",
   description: "Coffee beans"
 };
 

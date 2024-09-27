@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
-import { useAccount } from 'wagmi'; // Add this import
 import { fetchAttestations } from "../../api/attestations";
 import { AttestationModal } from "../../components/AttestationModal"; // Change this import
 import { AttestationsTable } from "../../components/AttestationsTable";
@@ -22,7 +21,6 @@ export default function BrowsePage() {
   const [columns, setColumns] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { isConnected } = useAccount(); // Add this line
 
   const loadAttestations = useCallback(async () => {
     const fetchedAttestations = await fetchAttestations();
@@ -42,10 +40,7 @@ export default function BrowsePage() {
     setIsModalOpen(false);
 
     try {
-      // Simulate the time it takes to create an attestation
       await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Reload all attestations to include the new one
       await loadAttestations();
     } catch (error) {
       console.error("Error creating attestation:", error);
@@ -57,7 +52,7 @@ export default function BrowsePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1A1A1A] to-[#2A2A2A] font-sans text-[#F5F5F5]">
       <NavBar isMainPage={false} />
-      <main className="flex-grow container mx-auto px-4 pt-8 pb-12"> {/* Updated padding top */}
+      <main className="flex-grow container mx-auto px-4 pt-8 pb-12">
         <motion.div {...fadeIn}>
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-4xl font-bold text-[#D4A574] font-poppins">Browse Coffee Journeys</h1>

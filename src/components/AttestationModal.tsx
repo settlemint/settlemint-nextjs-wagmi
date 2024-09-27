@@ -53,9 +53,7 @@ export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onCl
     try {
       const certificationsArray = certifications.split(',').map(cert => cert.trim());
       const timestamp = Math.floor(Date.now() / 1000);
-      const previousAttestationId = '0x0000000000000000000000000000000000000000000000000000000000000000'; // Placeholder
-
-      console.log("Attempting to create attestation", { batchId, stage, location, certifications: certificationsArray, details, attester: address, previousAttestationId, timestamp });
+      const previousAttestationId = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
       await createAttestation(
         batchId,
@@ -68,7 +66,6 @@ export const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onCl
         timestamp
       );
 
-      console.log("Attestation created successfully");
       onSubmit({ batchId, stage, location, certifications: certificationsArray, details, attester: address, previousAttestationId, timestamp });
       onClose();
     } catch (error) {

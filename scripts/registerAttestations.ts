@@ -1,7 +1,10 @@
 import { EAS, SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
+import chalk from "chalk";
+import { addDays, format, isValid } from "date-fns";
 import { ethers } from "ethers";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { setTimeout } from "node:timers/promises";
 
 const EAS_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_EAS_CONTRACT_ADDRESS;
 const BLOCKCHAIN_NODE = `${process.env.NEXT_PUBLIC_BLOCKCHAIN_NODE}/${process.env.NEXT_PUBLIC_AUTH_TOKEN}`;
@@ -48,7 +51,15 @@ const cities = {
 
 const stages = ["Farm", "Processing", "Export", "Import", "Roasting", "Retail"];
 
-function generateBatchId() {
+const certifications = {
+  Organic: { duration: 365 * 2 }, // 2 years
+  "Fair Trade": { duration: 365 }, // 1 year
+  "Rainforest Alliance": { duration: 365 * 3 }, // 3 years
+  "UTZ Certified": { duration: 365 * 2 }, // 2 years
+  "Bird Friendly": { duration: 365 * 5 }, // 5 years
+};
+
+function generateBatchId(): string {
   const year = new Date().getFullYear();
   const randomLetters = Math.random().toString(36).substring(2, 5).toUpperCase();
   const randomNumbers = Math.floor(Math.random() * 10000)
@@ -65,7 +76,7 @@ function getRandomCity(country: string): string {
   return getRandomElement(cities[country as keyof typeof cities] || []);
 }
 
-async function initializeEAS() {
+async function initializeEAS(): Promise<{ eas: EAS; signer: ethers.Wallet }> {
   if (!EAS_CONTRACT_ADDRESS || !BLOCKCHAIN_NODE || !PRIVATE_KEY) {
     throw new Error("Missing required environment variables");
   }
@@ -78,43 +89,102 @@ async function initializeEAS() {
   return { eas, signer };
 }
 
-function generateDetails(stage: number, batchId: string, location: string, certifications: string[]): string {
+function getRandomBatchSize(): number {
+  // Batch sizes in kg, ranging from small to large
+  const batchSizes = [100, 250, 500, 1000, 2000, 5000];
+  return getRandomElement(batchSizes);
+}
+
+function getSeasonalHarvestDate(country: string): Date {
+  const currentYear = new Date().getFullYear();
+  const harvestSeasons = {
+    Colombia: { start: 3, end: 6 }, // March to June
+    Brazil: { start: 4, end: 9 }, // April to September
+    Ethiopia: { start: 9, end: 12 }, // September to December
+    Vietnam: { start: 10, end: 2 }, // October to February (spans year-end)
+    Indonesia: { start: 6, end: 9 }, // June to September
+  };
+
+  const season = harvestSeasons[country as keyof typeof harvestSeasons] || { start: 1, end: 12 };
+  let month = Math.floor(Math.random() * (season.end - season.start + 1)) + season.start;
+  const day = Math.floor(Math.random() * 28) + 1; // Assuming max 28 days for simplicity
+
+  // Handle the case where the season spans across year-end
+  if (season.start > season.end && month < season.end) {
+    month += 12;
+  }
+
+  const date = new Date(currentYear, month - 1, day);
+
+  // Validate the date
+  if (!isValid(date)) {
+    console.warn(`Invalid date generated for ${country}. Using current date instead.`);
+    return new Date();
+  }
+
+  return date;
+}
+
+function formatDate(date: Date): string {
+  if (!isValid(date)) {
+    console.warn("Invalid date provided. Using current date instead.");
+    return format(new Date(), "yyyy-MM-dd");
+  }
+  return format(date, "yyyy-MM-dd");
+}
+
+function generateDetails(
+  stage: number,
+  batchId: string,
+  location: string,
+  certifications: string[],
+  batchSize: number,
+  harvestDate: Date,
+  currentDate: Date,
+): string {
   const stageDetails = {
     0: [
-      `Arabica beans harvested from ${location} at optimal ripeness. Altitude: 1,500m. Soil pH: 6.2. Shade-grown under native trees.`,
-      `Single-origin Robusta cultivated in ${location}. Recent rainfall: 120mm. Organic pest control methods employed.`,
-      `Mixed varietals from small-scale farmers in ${location}. Community-supported agriculture initiative. Average farm size: 2 hectares.`,
+      `Arabica beans harvested from ${location} at optimal ripeness. Altitude: ${1200 + Math.floor(Math.random() * 800)}m. Soil pH: ${(6 + Math.random() * 1).toFixed(1)}. Shade-grown under native trees.`,
+      `Single-origin Robusta cultivated in ${location}. Recent rainfall: ${80 + Math.floor(Math.random() * 80)}mm. Organic pest control methods employed.`,
+      `Mixed varietals from small-scale farmers in ${location}. Community-supported agriculture initiative. Average farm size: ${(1 + Math.random() * 3).toFixed(1)} hectares.`,
     ],
     1: [
-      `Wet processing method used for batch ${batchId} in ${location}. Fermentation time: 36 hours. Water consumption: 20L per kg of cherries.`,
-      "Honey process applied to enhance sweetness. Mucilage partially removed. Drying time: 15 days on raised beds.",
-      "Natural process: cherries sun-dried for 21 days. Constant monitoring for moisture levels and potential defects",
+      `Wet processing method used for batch ${batchId} in ${location}. Fermentation time: ${24 + Math.floor(Math.random() * 24)} hours. Water consumption: ${(15 + Math.random() * 10).toFixed(1)}L per kg of cherries.`,
+      `Honey process applied to enhance sweetness. Mucilage partially removed. Drying time: ${12 + Math.floor(Math.random() * 6)} days on raised beds.`,
+      `Natural process: cherries sun-dried for ${18 + Math.floor(Math.random() * 7)} days. Constant monitoring for moisture levels and potential defects.`,
     ],
     2: [
-      `Batch ${batchId} prepared for export from ${location}. Moisture content: 10.5%. Packaged in GrainPro bags for optimal freshness.`,
-      "Pre-shipment samples sent to importers. Cupping score: 86.5. Notes of caramel, citrus, and blackberry detected.",
-      `Export documentation completed for ${batchId}. Fair Trade premium: $0.20/lb. Container loaded with 275 bags (69kg each).`,
+      `Batch ${batchId} prepared for export from ${location}. Moisture content: ${(10 + Math.random() * 1).toFixed(1)}%. Packaged in GrainPro bags for optimal freshness.`,
+      `Pre-shipment samples sent to importers. Cupping score: ${(80 + Math.random() * 10).toFixed(1)}. Notes of ${getRandomElement(["caramel", "chocolate", "nuts"])}, ${getRandomElement(["citrus", "berries", "tropical fruit"])}, and ${getRandomElement(["floral", "herbal", "spices"])} detected.`,
+      `Export documentation completed for ${batchId}. Fair Trade premium: $${(0.15 + Math.random() * 0.15).toFixed(2)}/lb. Container loaded with ${Math.floor(batchSize / 69)} bags (69kg each).`,
     ],
     3: [
-      `Batch ${batchId} cleared customs in ${location}. Quality control check performed: no signs of mold or insect damage.`,
-      `Samples from ${batchId} roasted and cupped upon arrival. Flavor profile matches pre-shipment samples. Stored in climate-controlled warehouse.`,
-      `Import duties paid. Traceability information verified. Batch ${batchId} ready for distribution to local roasters.`,
+      `Batch ${batchId} cleared customs in ${location}. Quality control check performed: ${getRandomElement(["no signs of mold or insect damage", "slight variation in bean size noted", "optimal moisture levels confirmed"])}.`,
+      `Samples from ${batchId} roasted and cupped upon arrival. Flavor profile ${getRandomElement(["matches", "slightly differs from", "exceeds"])} pre-shipment samples. Stored in climate-controlled warehouse at ${(18 + Math.random() * 4).toFixed(1)}°C.`,
+      `Import duties paid. Traceability information verified. Batch ${batchId} ready for distribution to local roasters. CO₂ flushing applied for extended freshness.`,
     ],
     4: [
-      `Roasted ${batchId} to medium profile. First crack at 196°C, total roast time 11 minutes. Cooled and degassed for 24 hours.`,
-      "Light roast applied to preserve origin characteristics. Roast color: Agtron 60. Batch size: 25kg.",
-      "Espresso roast developed for batch ${batchId}. Second crack reached. Post-roast blend of 80% ${location} beans with 20% Brazilian for balance.",
+      `Roasted ${batchId} to ${getRandomElement(["light", "medium", "dark"])} profile. First crack at ${(195 + Math.random() * 5).toFixed(1)}°C, total roast time ${(9 + Math.random() * 4).toFixed(1)} minutes. Cooled and degassed for ${18 + Math.floor(Math.random() * 12)} hours.`,
+      `Light roast applied to preserve origin characteristics. Roast color: Agtron ${55 + Math.floor(Math.random() * 10)}. Batch size: ${(batchSize * 0.8).toFixed(0)}kg after weight loss.`,
+      `Espresso roast developed for batch ${batchId}. Second crack reached. Post-roast blend of ${70 + Math.floor(Math.random() * 20)}% ${location} beans with ${30 - Math.floor(Math.random() * 20)}% Brazilian for balance.`,
     ],
     5: [
-      `Batch ${batchId} now available in our ${location} flagship store. Promotional campaign: "Journey to ${location}" featuring farmer stories.`,
-      `Online sales launched for batch ${batchId}. Limited edition packaging highlighting ${certifications.join(", ")}.`,
-      `${batchId} featured in our seasonal subscription box. Paired with locally-made chocolate for gift sets.`,
+      `Batch ${batchId} now available in our ${location} flagship store. Promotional campaign: "Journey to ${location}" featuring farmer stories and QR code for traceability.`,
+      `Online sales launched for batch ${batchId}. Limited edition packaging highlighting ${certifications.join(", ")}. Expected shelf life: ${3 + Math.floor(Math.random() * 3)} months.`,
+      `${batchId} featured in our seasonal subscription box. Paired with locally-made ${getRandomElement(["chocolate", "pastries", "coffee equipment"])} for gift sets. Roasted-on date clearly marked.`,
     ],
   };
 
   const selectedDetail = stageDetails[stage as keyof typeof stageDetails][Math.floor(Math.random() * 3)];
-  const certificationInfo = certifications.length > 0 ? ` Certifications: ${certifications.join(", ")}.` : "";
-  return selectedDetail + certificationInfo;
+  const certificationInfo =
+    certifications.length > 0
+      ? ` Certifications: ${certifications.map((cert) => `${cert} (valid until ${formatDate(addDays(currentDate, 365))})`).join(", ")}.`
+      : "";
+
+  const harvestInfo = stage === 0 ? ` Harvest date: ${formatDate(harvestDate)}.` : "";
+  const batchSizeInfo = ` Batch size: ${batchSize}kg.`;
+
+  return selectedDetail + certificationInfo + harvestInfo + batchSizeInfo;
 }
 
 async function createAttestation(
@@ -128,7 +198,10 @@ async function createAttestation(
   originCity: string,
   destinationCountry: string,
   destinationCity: string,
-) {
+  batchSize: number,
+  harvestDate: Date,
+  currentDate: Date,
+): Promise<string> {
   const timestamp = Math.floor(Date.now() / 1000);
   let location: string;
 
@@ -140,9 +213,16 @@ async function createAttestation(
     location = stage === 2 ? `${originCity}, ${originCountry}` : `${destinationCity}, ${destinationCountry}`;
   }
 
-  const certifications = ["Organic", "Fair Trade", "Rainforest Alliance", "UTZ Certified", "Bird Friendly"];
-  const selectedCertifications = certifications.slice(0, Math.floor(Math.random() * 4) + 1);
-  const details = generateDetails(stage, batchId, location, selectedCertifications);
+  const selectedCertifications = Object.keys(certifications).slice(0, Math.floor(Math.random() * 3) + 1);
+  const details = generateDetails(
+    stage,
+    batchId,
+    location,
+    selectedCertifications,
+    batchSize,
+    harvestDate,
+    currentDate,
+  );
 
   const encodedData = schemaEncoder.encodeData([
     { name: "batchId", value: batchId, type: "string" },
@@ -192,60 +272,153 @@ function writeAttestationDetailsToFile(attestationDetails: AttestationDetails[])
   console.log(`Attestation details written to ${filePath}`);
 }
 
-export async function registerMultipleAttestations(count: number) {
-  try {
-    const { eas, signer } = await initializeEAS();
-    const schemaEncoder = new SchemaEncoder(
-      "string batchId, uint256 timestamp, address attester, uint8 stage, string location, string[] certifications, string details, bytes32 previousAttestationId",
-    );
-    const attestationDetails: AttestationDetails[] = [];
+async function updateBatch(
+  eas: EAS,
+  schemaEncoder: SchemaEncoder,
+  signer: ethers.Wallet,
+  batchInfo: {
+    batchId: string;
+    stage: number;
+    previousAttestationId: string;
+    originCountry: string;
+    originCity: string;
+    destinationCountry: string;
+    destinationCity: string;
+    batchSize: number;
+    harvestDate: Date;
+    currentDate: Date;
+  },
+): Promise<{ uid: string; stage: number }> {
+  const {
+    batchId,
+    stage,
+    previousAttestationId,
+    originCountry,
+    originCity,
+    destinationCountry,
+    destinationCity,
+    batchSize,
+    harvestDate,
+    currentDate,
+  } = batchInfo;
 
-    for (let i = 0; i < count; i++) {
-      const batchId = generateBatchId();
-      let previousAttestationId = ethers.ZeroHash;
-      const originCountry = getRandomElement(countries.production);
-      const originCity = getRandomCity(originCountry);
-      const destinationCountry = getRandomElement(countries.import);
-      const destinationCity = getRandomCity(destinationCountry);
+  const uid = await createAttestation(
+    eas,
+    schemaEncoder,
+    batchId,
+    stage,
+    previousAttestationId,
+    signer.address,
+    originCountry,
+    originCity,
+    destinationCountry,
+    destinationCity,
+    batchSize,
+    harvestDate,
+    currentDate,
+  );
 
-      for (let stage = 0; stage < 6; stage++) {
-        const uid = await createAttestation(
-          eas,
-          schemaEncoder,
-          batchId,
-          stage,
-          previousAttestationId,
-          signer.address,
-          originCountry,
-          originCity,
-          destinationCountry,
-          destinationCity,
-        );
-        const details = await getAttestationDetails(eas, uid);
-        attestationDetails.push(details);
-        previousAttestationId = uid;
-      }
-    }
-
-    writeAttestationDetailsToFile(attestationDetails);
-    return attestationDetails;
-  } catch (error) {
-    console.error("Error registering attestations:", error);
-    throw error;
-  }
+  console.log(`Updated batch ${batchId} to stage ${stage + 1}`);
+  return { uid, stage: stage + 1 };
 }
 
-async function main() {
+function getRandomInterval(stage: number): number {
+  const baseInterval = 30 * 1000; // 30 seconds in milliseconds
+  const additionalInterval = Math.floor(Math.random() * 60 * 1000); // 0-60 seconds in milliseconds
+  const stageMultiplier = Math.min(stage + 1, 3); // Stages 0-2 have increasing intervals, 3-5 have max interval
+  return baseInterval + additionalInterval / stageMultiplier;
+}
+
+async function simulateMultipleBatches(count: number, duration: number): Promise<void> {
+  console.log(chalk.blue.bold(`\n🚀 Starting simulation with ${count} batches for ${duration / (60 * 60 * 1000)} hours`));
+  const { eas, signer } = await initializeEAS();
+  console.log(chalk.cyan(`🔑 EAS initialized with signer address: ${signer.address}`));
+  const schemaEncoder = new SchemaEncoder(
+    "string batchId, uint256 timestamp, address attester, uint8 stage, string location, string[] certifications, string details, bytes32 previousAttestationId",
+  );
+
+  const batches = Array.from({ length: count }, () => ({
+    batchId: generateBatchId(),
+    stage: 0,
+    previousAttestationId: ethers.ZeroHash,
+    originCountry: getRandomElement(countries.production),
+    destinationCountry: getRandomElement(countries.import),
+    batchSize: getRandomBatchSize(),
+    harvestDate: new Date(),
+    currentDate: new Date(),
+    originCity: "",
+    destinationCity: "",
+  }));
+
+  console.log(chalk.yellow.bold("\n📦 Initialized batches:"));
+  for (const batch of batches) {
+    batch.originCity = getRandomCity(batch.originCountry);
+    batch.destinationCity = getRandomCity(batch.destinationCountry);
+    batch.harvestDate = getSeasonalHarvestDate(batch.originCountry);
+    batch.currentDate = batch.harvestDate;
+    console.log(
+      chalk.yellow(
+        `   Batch ${batch.batchId}: ${batch.originCity}, ${batch.originCountry} → ${batch.destinationCity}, ${batch.destinationCountry}`,
+      ),
+    );
+  }
+
+  const startTime = Date.now();
+  const attestationDetails: AttestationDetails[] = [];
+
+  console.log(chalk.green.bold("\n🔄 Starting batch updates..."));
+  while (Date.now() - startTime < duration) {
+    const batchToUpdate = getRandomElement(batches.filter((b) => b.stage < stages.length));
+    if (!batchToUpdate) {
+      console.log(chalk.gray("⏳ All batches completed. Waiting for duration to end..."));
+      await setTimeout(5000);
+      continue;
+    }
+
+    console.log(
+      chalk.magenta(`\n🔨 Updating batch ${batchToUpdate.batchId} (current stage: ${stages[batchToUpdate.stage]})`),
+    );
+    try {
+      const result = await updateBatch(eas, schemaEncoder, signer, batchToUpdate);
+      batchToUpdate.previousAttestationId = result.uid;
+      batchToUpdate.stage = result.stage;
+      batchToUpdate.currentDate = addDays(batchToUpdate.currentDate, 7 + Math.floor(Math.random() * 14));
+
+      console.log(chalk.green(`✅ Batch ${batchToUpdate.batchId} updated to stage: ${stages[batchToUpdate.stage]}`));
+      console.log(chalk.cyan(`🆔 New attestation UID: ${result.uid}`));
+
+      const details = await getAttestationDetails(eas, result.uid);
+      attestationDetails.push(details);
+      console.log(chalk.blue(`📊 Attestation details retrieved for UID: ${result.uid}`));
+
+      const interval = getRandomInterval(batchToUpdate.stage);
+      console.log(chalk.gray(`⏱️  Waiting ${(interval / 1000).toFixed(1)} seconds before next update...`));
+      await setTimeout(interval);
+    } catch (error) {
+      console.error(chalk.red(`❌ Error updating batch ${batchToUpdate.batchId}:`), error);
+    }
+  }
+
+  console.log(
+    chalk.blue.bold(`\n🏁 Simulation completed. Writing ${attestationDetails.length} attestation details to file...`),
+  );
+  writeAttestationDetailsToFile(attestationDetails);
+  console.log(chalk.green.bold("✅ Simulation completed and data written to file."));
+}
+
+async function main(): Promise<void> {
   try {
-    const attestationCount = 5; // This will create 2 complete coffee journeys, each with 6 stages
-    const attestations = await registerMultipleAttestations(attestationCount);
-    console.log(`Registered ${attestations.length} attestations`);
+    const batchCount = 10; // Number of batches to simulate
+    const durationInHours = 1; // Duration of the simulation in hours
+    console.log(chalk.blue.bold(`\n🎬 Starting main function with ${batchCount} batches for ${durationInHours} hours`));
+    await simulateMultipleBatches(batchCount, durationInHours * 60 * 60 * 1000);
   } catch (error) {
-    console.error("Failed to register attestations:", error);
+    console.error(chalk.red.bold("❌ Failed to run simulation:"), error);
   }
 }
 
 if (require.main === module) {
+  console.log(chalk.green.bold("🚀 Script started"));
   main();
 }
 

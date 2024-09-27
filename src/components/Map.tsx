@@ -1,6 +1,4 @@
 import L from 'leaflet';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 
@@ -9,8 +7,8 @@ interface MapProps {
 }
 
 const DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
+  iconUrl: '/_next/static/media/marker-icon.ded0b320.png',
+  shadowUrl: '/_next/static/media/marker-shadow.071016c8.png',
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
