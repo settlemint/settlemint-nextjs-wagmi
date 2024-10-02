@@ -37,25 +37,22 @@ const MapComponent: React.FC<MapProps> = ({ coordinates }) => {
   // Calculate the appropriate zoom level
   const lonDiff = bounds.maxLon - bounds.minLon;
   const latDiff = bounds.maxLat - bounds.minLat;
-  const maxZoom = 50;
-  const minZoom = 1;
-  const zoomFactor = 360 / Math.max(lonDiff * 2, latDiff * 4, 1); // Prevent division by zero
-  const zoom = Math.max(Math.min(zoomFactor, maxZoom), minZoom);
+  const zoom = Math.min(360 / Math.max(lonDiff * 2, latDiff * 4), 50);
 
   return (
     <div className="relative w-full h-[400px]">
       <ComposableMap
-        projection={projection}
+        projection={projection as unknown as string}
         width={width}
         height={height}
         style={{ width: "100%", height: "100%" }}
       >
-        <ZoomableGroup center={center} zoom={zoom} minZoom={minZoom} maxZoom={maxZoom}>
+        <ZoomableGroup center={center} zoom={zoom}>
           <Geographies geography={geoUrl}>
             {({ geographies }: { geographies: GeographyProps[] }) =>
               geographies.map((geo) => (
                 <Geography
-                  key={geo.rsmKey}
+                  key={geo.key}
                   geography={geo}
                   fill="#EAEAEC"
                   stroke="#D6D6DA"
@@ -65,7 +62,7 @@ const MapComponent: React.FC<MapProps> = ({ coordinates }) => {
           </Geographies>
 
           {coordinates.map((coord, index) => (
-            <Marker key={`marker-${coord.join(',')}`} coordinates={coord}>
+            <Marker key={`marker-${index}`} coordinates={coord}>
               <circle r={4} fill="#F00" />
             </Marker>
           ))}
